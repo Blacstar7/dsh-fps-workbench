@@ -68,6 +68,10 @@ dsh plugin --profile desktop add "/path/to/fps-workbench-0.1.76.tgz"
 
 Replace `desktop` with `web` for the Web profile. After updating an existing installation, restart DSH to load the image generation tools.
 
+### Known issue
+
+**Sessions and scheduled tasks may fail to load after upgrading DSH Desktop to `0.2.2-rc.2`.** This can happen when the desktop profile still loads the `0.2.2-rc.1` storage dependency from an older Computer Use installation. The issue occurs with FPS enabled or disabled. Back up the desktop profile, move the old Computer Use packages and their storage dependency out of its package directory, and restart DSH so it loads the components bundled with the installed version.
+
 ## License
 
 FPS is available under the [MIT License](LICENSE).
