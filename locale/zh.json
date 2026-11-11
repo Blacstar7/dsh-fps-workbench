@@ -2,6 +2,6 @@
   "meta": {
     "title": "Four-pointed star",
     "description": "DeepSeek Harness 会话工作台，支持会话产物、工具步骤摘要、附件草稿、服务商用量和纯文本模型识图。",
-    "detail": "README.zh.md"
+    "detail": "locale/detail.zh.md"
   }
 }
