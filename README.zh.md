@@ -1,8 +1,8 @@
 # Four-pointed star（FPS）
 
-[English](README.md)
+[English](README.md) · [更新日志](CHANGELOG.md)
 
-FPS 是 DeepSeek Harness（DSH）的会话工作台。你可以在同一处跟踪工具进度、打开会话产物、查看上下文与服务商用量。切换会话后可以找回未发送的附件，使用纯文本模型时也可以借助已配置的视觉模型读图。
+FPS 是 DeepSeek Harness（DSH）的会话工作台。你可以在同一处跟踪工具进度、打开会话产物、查看上下文与服务商用量。切换会话后可以找回未发送的附件；使用纯文本模型时可借助已配置的视觉模型读图，也可按需开启云端或本地生图。
 
 ## 界面截图
 
@@ -35,6 +35,21 @@ FPS 通过 DSH 原生会话发送消息。模型可以使用当前配置已启�
 
 点模型选择器旁的圆环。FPS 根据 DSH 中已启用的服务商及其 API Key 查询用量，按适配接口实际返回的内容显示余额、已用金额、额度或重置时间。零余额正常显示。接口未适配、查询失败或缺少数据时，相应账户或字段会自动隐藏。会话 Token 和上下文占用估算由 DSH 提供，单独显示。
 
+## 可选生图工具
+
+在「插件 → Four-pointed star → 图片生成」中按需开启，四项开关默认关闭。你可以在提示词中指定服务，也可以让 FPS 从已开启、已就绪的服务中选择。生成的图片进入会话「输出内容」，可用 DSH 原生预览打开。云端服务会接收生图提示词。
+
+图中开启 ComfyUI 是为了展示下载入口。只有点「下载并安装」才会开始安装。
+
+![四个生图开关，示例中开启了 ComfyUI 并显示下载按钮](docs/screenshots/04-image-generation.png)
+
+- **Z-Image Turbo**。无需 API Key。使用 Hugging Face 的共享 Space，适合快速试稿，受排队与每日 GPU 额度限制。
+- **CogView-3-Flash**。智谱免费 Flash 模型，适合常规画质需求。需要智谱开放平台 API Key，受服务限流约束。
+- **Pollinations**。需要自己的 API Key。FPS 在实时目录标价为零时使用 SDXL Lightning 快速打样，服务仍可能要求账户有正的可用余额。
+- **ComfyUI + Comfy MCP**。通过 ComfyUI 和官方 Comfy MCP 在本机生图。开启后手动启动下载。随附的 SD 1.5 工作流适合约 512 像素的草图，安装需要 Python、Git、网络连接和 16 GiB 可用磁盘空间。
+
+安装步骤、凭证设置、平台要求和画质说明见插件详情。[图片生成说明](locale/detail.zh.md#可选生图工具)
+
 ## 自定义
 
 - **外观**。在 DSH「设置 → 通用 → 外观」中选择浅色、深色或跟随系统。FPS 会同步切换侧栏、消息区、输入框和弹层的配色。
@@ -45,13 +60,13 @@ FPS 通过 DSH 原生会话发送消息。模型可以使用当前配置已启�
 
 使用 DSH 0.2.2-rc.1 或更新版本的桌面端或 Web 会话界面。语音输入和文件预览等功能需要当前 DSH 配置启用相应组件。
 
-从 GitHub Releases 下载 `.tgz` 安装包，在 DSH「插件 → 添加插件」中选择本地路径。已安装 DSH 命令行时也可运行以下命令。[GitHub Releases](https://github.com/Blacstar7/dsh-fps-workbench/releases)
+从 [GitHub 最新版本](https://github.com/Blacstar7/dsh-fps-workbench/releases/latest)下载 `.tgz` 安装包，在 DSH「插件 → 添加插件」中选择本地路径。已安装 DSH 命令行时也可运行以下命令。
 
 ```sh
-dsh plugin --profile desktop add "/实际路径/fps-workbench-0.1.75.tgz"
+dsh plugin --profile desktop add "/实际路径/fps-workbench-0.1.76.tgz"
 ```
 
-Web 配置将 `desktop` 换成 `web`。如 DSH 提示重新加载，按提示操作。
+Web 配置将 `desktop` 换成 `web`。更新已有安装后，请重启 DSH 以加载新版生图工具。
 
 ## 许可证
 

@@ -1,8 +1,8 @@
 # Four-pointed star (FPS)
 
-[简体中文](README.zh.md)
+[简体中文](README.zh.md) · [Changelog](CHANGELOG.md)
 
-FPS is a conversation workspace for DeepSeek Harness (DSH). Track tool progress, open session outputs, and check context and provider usage from one interface. Return to unsent attachments when you switch sessions, and use a configured vision model to interpret images for a text-only model.
+FPS is a conversation workspace for DeepSeek Harness (DSH). Track tool progress, open session outputs, and check context and provider usage from one interface. Keep unsent attachments when switching sessions, use a configured vision model to interpret images for a text-only model, or enable cloud or local image generation.
 
 ## Screenshots
 
@@ -35,6 +35,21 @@ FPS sends messages through the native DSH session. Models can use the tools enab
 
 Click the ring next to the model selector. FPS queries usage using the providers and API keys enabled in DSH. It shows the balance, spending, quota, or reset time returned by a supported endpoint. Zero balances are displayed. Accounts or fields are hidden when an endpoint is unsupported, a query fails, or data is missing. DSH supplies the session's token counts and estimated context usage separately.
 
+## Optional image generation
+
+Open **Plugins → Four-pointed star → Image generation** to switch on providers. All four are off by default. Ask for a provider by name or let FPS choose among the enabled, ready providers. Generated images appear in session outputs and open in DSH's native preview. Cloud providers receive your image prompt.
+
+The screenshot shows the download button after you turn on ComfyUI. Setup starts only when you select **Download and install**.
+
+![Four image generation switches, with ComfyUI enabled for demonstration and its download button visible](docs/screenshots/04-image-generation.png)
+
+- **Z-Image Turbo.** No API key. The shared Hugging Face Space is suited to quick concepts and subject to queueing and daily GPU quotas.
+- **CogView-3-Flash.** Standard-quality generation on Zhipu's free Flash tier. Requires a Zhipu BigModel API key and is subject to rate limits.
+- **Pollinations.** Requires your own API key. FPS uses SDXL Lightning for quick drafts when the live catalog lists it at zero price. Pollinations may still require a positive available balance.
+- **ComfyUI + Comfy MCP.** Local generation with ComfyUI and its official MCP integration. Switch it on, then start the download explicitly. The included SD 1.5 workflow is suitable for roughly 512 px drafts. Setup needs Python, Git, internet access, and 16 GiB of free disk space.
+
+See the plugin details for setup, credentials, platform requirements, and output quality. [Image generation guide](locale/detail.en.md#optional-image-generation)
+
 ## Customize
 
 - **Appearance.** In DSH, open Settings → General → Appearance and select Light, Dark, or System. FPS follows that setting across its sidebar, conversation, composer, and menus.
@@ -45,13 +60,13 @@ Click the ring next to the model selector. FPS queries usage using the providers
 
 Use DSH 0.2.2-rc.1 or later with the desktop or Web conversation interface. Features such as voice input and file previews require the corresponding DSH components in your profile.
 
-Download the `.tgz` bundle from GitHub Releases and install it through Plugins → Add plugin using the local path option. You can also run the following command with the DSH CLI. [GitHub Releases](https://github.com/Blacstar7/dsh-fps-workbench/releases)
+Download the `.tgz` bundle from the [latest GitHub release](https://github.com/Blacstar7/dsh-fps-workbench/releases/latest) and install it through Plugins → Add plugin using the local path option. You can also run the following command with the DSH CLI.
 
 ```sh
-dsh plugin --profile desktop add "/path/to/fps-workbench-0.1.75.tgz"
+dsh plugin --profile desktop add "/path/to/fps-workbench-0.1.76.tgz"
 ```
 
-Replace `desktop` with `web` for the Web profile. Reload the interface if DSH prompts you to.
+Replace `desktop` with `web` for the Web profile. After updating an existing installation, restart DSH to load the image generation tools.
 
 ## License
 

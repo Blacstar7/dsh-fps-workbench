@@ -1,5 +1,6 @@
 import { providerUsage } from './provider-usage.js';
 import { sessionOutputsProjection } from './session-outputs.js';
+import { registerImageGeneration } from './image-generation.js';
 
 const MAX_ENCODED_IMAGE = Math.ceil(8 * 1024 * 1024 / 3) * 4;
 const NO_STORE = { 'cache-control': 'no-store' };
@@ -23,6 +24,7 @@ export async function apply(ctx) {
     fetch: async (request) => Response.json(await providerUsage(ctx, request.signal), { headers: NO_STORE }),
   });
   await ctx.sessionProjections.register(sessionOutputsProjection);
+  await registerImageGeneration(ctx);
 }
 
 async function describeImages(ctx, request) {

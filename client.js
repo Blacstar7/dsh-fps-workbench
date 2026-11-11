@@ -416,6 +416,47 @@ window.__ModuleLoader__.load({
       permissionEnable: '启用',
     };
 
+    Object.assign(en, {
+      imageSettings: 'Image generation',
+      imageSettingsIntro: 'Optional text-to-image tools for this DSH installation. Cloud providers receive the image prompt. Turn on the ones you want to use.',
+      imageSettingsLoad: 'Loading image providers…', imageSettingsError: 'Could not update image settings.',
+      imageSettingsReadError: 'Could not load image settings. If you just updated FPS, restart DSH.',
+      imageSettingsUnavailable: 'Image tools are not available on this DSH host.',
+      imageZ: 'No key required. Good for quick concepts and illustration. Shared Hugging Face capacity (typically 2 minutes of GPU time per day for anonymous users); waits and availability vary.',
+      imageCog: 'Requires a Zhipu API key with access to the free CogView-3-Flash model. Best for drafts and Chinese prompts. Rate limits depend on the account.',
+      imagePoll: 'Requires a Pollinations key and positive Pollen balance. FPS only uses a verified zero-price community model (SDXL Lightning). Good for quick drafts; the service may log prompts and images.',
+      imageComfy: 'Runs on this computer through official Comfy MCP. The bundled starter workflow makes 512-class SD 1.5 images for drafts. A modern GPU is recommended; CPU generation can take several minutes.',
+      imageComfyRequirements: 'Apple Silicon macOS 14+, Windows x64 or Linux x64 (glibc 2.28+). Requires Python 3.11–3.13 with pip and venv, Git, 8 GB RAM, 16 GiB free disk, and internet for the initial download.',
+      imageKey: 'API key', imageSaveKey: 'Save key', imageRemoveKey: 'Remove saved key', imageKeyConfigured: 'Key configured',
+      imageKeyMissing: 'Key required', imageKeyUnavailable: 'Configure the key on the DSH host.',
+      imageInstall: 'Download and install', imageCancel: 'Cancel download', imageRetry: 'Retry installation',
+      imageReady: 'Ready to generate', imageMissing: 'Setup required', imageUnsupported: 'Automatic setup is unavailable on this computer.',
+      imageInstallError: 'Setup did not finish.', imageInstalling: 'Installing…',
+      imageStage_checking: 'Checking requirements…', imageStage_environment: 'Preparing Python…',
+      imageStage_comfyui: 'Downloading ComfyUI…', imageStage_dependencies: 'Installing ComfyUI and official Comfy MCP…',
+      imageStage_model: 'Downloading the image model…', imageStage_verifying: 'Verifying the installation…',
+    });
+    Object.assign(zh, {
+      imageSettings: '图片生成',
+      imageSettingsIntro: '可为此 DSH 安装启用文生图工具。云端服务会收到生图提示词，请按需开启。',
+      imageSettingsLoad: '正在读取生图设置…', imageSettingsError: '无法更新生图设置。',
+      imageSettingsReadError: '无法读取图片生成设置。如果刚更新 FPS，请重启 DSH。',
+      imageSettingsUnavailable: '此 DSH 主机暂不支持生图工具。',
+      imageZ: '无需 Key，适合快速做概念图和插画。使用 Hugging Face 共享算力，匿名用户通常每天有 2 分钟 GPU 时间，可能排队或暂时不可用。',
+      imageCog: '需要可访问免费 CogView-3-Flash 模型的智谱 API Key，适合初稿和中文提示词。速率限制以账号为准。',
+      imagePoll: '需要 Pollinations Key 和正的 Pollen 余额。FPS 只调用经核验为零价的社区模型 SDXL Lightning，适合快速出草图。服务可能记录提示词和图片。',
+      imageComfy: '通过官方 Comfy MCP 在本机生图。初始工作流使用 SD 1.5，输出约 512 像素级别的草图。建议使用现代 GPU，仅用 CPU 可能需要数分钟。',
+      imageComfyRequirements: '支持 Apple 芯片 Mac（macOS 14+）、Windows x64 或 Linux x64（glibc 2.28+）。需要 Python 3.11–3.13（含 pip 和 venv）、Git、8 GB 内存、16 GiB 可用磁盘，以及首次下载所需的网络。',
+      imageKey: 'API Key', imageSaveKey: '保存 Key', imageRemoveKey: '移除已保存的 Key', imageKeyConfigured: '已配置 Key',
+      imageKeyMissing: '需要配置 Key', imageKeyUnavailable: '请在 DSH 主机上配置 Key。',
+      imageInstall: '下载并安装', imageCancel: '取消下载', imageRetry: '重试安装',
+      imageReady: '可以生图', imageMissing: '待安装', imageUnsupported: '此电脑不支持自动安装。',
+      imageInstallError: '安装未完成。', imageInstalling: '正在安装…',
+      imageStage_checking: '正在检查运行要求…', imageStage_environment: '正在准备 Python…',
+      imageStage_comfyui: '正在下载 ComfyUI…', imageStage_dependencies: '正在安装 ComfyUI 和官方 Comfy MCP…',
+      imageStage_model: '正在下载生图模型…', imageStage_verifying: '正在验证安装…',
+    });
+
     function brandImage(animated, colors) {
       const motion = animated ? `<style>
         path { animation: pulse 1.6s ease-in-out infinite both; }
@@ -431,6 +472,27 @@ window.__ModuleLoader__.load({
     }
 
     const CSS = `
+      .cw-image-settings { padding: 4px 0 16px; color: var(--dsw-alias-label-primary); }
+      .cw-image-settings h2 { margin: 0 0 5px; font-size: 15px; font-weight: 600; }
+      .cw-image-settings p { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 13px; line-height: 1.55; }
+      .cw-image-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px 20px;
+        padding: 14px 0; border-bottom: 1px solid var(--dsw-alias-border-l1); }
+      .cw-image-row strong { display: block; margin-bottom: 3px; font-size: 14px; font-weight: 600; }
+      .cw-image-switch { width: 36px; height: 21px; margin-top: 1px; padding: 2px; border: 0; border-radius: 20px;
+        background: var(--dsw-alias-border-l2); cursor: pointer; }
+      .cw-image-switch::before { content: ''; display: block; width: 17px; height: 17px; border-radius: 100%;
+        background: var(--dsw-alias-label-caption); }
+      .cw-image-switch[aria-checked='true'] { background: var(--dsw-alias-brand-primary); }
+      .cw-image-switch[aria-checked='true']::before { margin-left: auto; background: white; }
+      .cw-image-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 9px; }
+      .cw-image-actions p { flex-basis: 100%; }
+      .cw-image-actions button, .cw-image-actions input { min-height: 30px; padding: 4px 9px;
+        border: 1px solid var(--dsw-alias-border-l2); border-radius: 7px; color: inherit;
+        background: var(--dsw-alias-bg-layer-2); font: inherit; font-size: 13px; }
+      .cw-image-actions button:not(:disabled) { cursor: pointer; }
+      .cw-image-actions input { width: min(100%, 235px); }
+      .cw-image-actions button:disabled, .cw-image-switch:disabled { opacity: .55; }
+      .cw-image-settings .cw-image-error { margin: 6px 0 0; color: var(--dsw-alias-state-error-primary); }
       html[data-workbench-theme] body {
         --cw-bg: var(--dsw-alias-bg-base);
         --cw-surface: var(--dsw-alias-bg-layer-1);
@@ -1512,6 +1574,132 @@ window.__ModuleLoader__.load({
     function translate(props, key) {
       const t = props.t || runtime.t || ((name) => en[name] || name);
       return t(key);
+    }
+
+    const IMAGE_ROWS = [
+      ['z-image', 'Z-Image Turbo', 'imageZ'], ['cogview', 'CogView-3-Flash', 'imageCog'],
+      ['pollinations', 'Pollinations', 'imagePoll'], ['comfy', 'ComfyUI + Comfy MCP', 'imageComfy'],
+    ];
+
+    function ImageGenerationSettings(props) {
+      const t = (key) => translate(props, key);
+      const [state, setState] = React.useState(null);
+      const [keys, setKeys] = React.useState({});
+      const [pending, setPending] = React.useState('');
+      const [error, setError] = React.useState(false);
+      const requestRef = React.useRef(null);
+      const installing = state?.providers?.comfy?.setup?.state === 'installing';
+      const loading = state === null;
+
+      async function request(signal, input) {
+        const response = await fetch(new URL('api/workbench/imageSettings', document.baseURI), {
+          cache: 'no-store', signal,
+          ...(input ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(input) } : {}),
+        });
+        if (!response.ok) throw new Error('Image settings request failed');
+        return response.json();
+      }
+
+      React.useEffect(() => () => requestRef.current?.abort(), []);
+      React.useEffect(() => {
+        if (pending || (!loading && !installing)) return;
+        const controller = new AbortController();
+        let timer;
+        async function refresh() {
+          try {
+            const result = await request(controller.signal);
+            if (controller.signal.aborted) return;
+            setState(result);
+            setError(false);
+            if (result.providers?.comfy?.setup?.state === 'installing') timer = setTimeout(refresh, 1500);
+          } catch {
+            if (controller.signal.aborted) return;
+            setError(true);
+            if (installing) timer = setTimeout(refresh, 3000);
+            else setState({ supported: false });
+          }
+        }
+        if (loading) void refresh();
+        else timer = setTimeout(refresh, 1500);
+        return () => { controller.abort(); clearTimeout(timer); };
+      }, [loading, installing, pending]);
+
+      async function change(input) {
+        if (requestRef.current) return;
+        const controller = new AbortController();
+        requestRef.current = controller;
+        setPending(input.provider || 'comfy');
+        setError(false);
+        try {
+          const result = await request(controller.signal, input);
+          if (controller.signal.aborted) return;
+          setState(result);
+          if (input.action === 'saveKey') setKeys((old) => ({ ...old, [input.provider]: '' }));
+        } catch {
+          if (!controller.signal.aborted) setError(true);
+        } finally {
+          requestRef.current = null;
+          if (!controller.signal.aborted) setPending('');
+        }
+      }
+
+      function keyControls(provider, title, row) {
+        const key = keys[provider] || '';
+        const save = () => change({ action: 'saveKey', provider, key });
+        return h('div', { className: 'cw-image-actions' },
+          h('p', null, t(row.configured ? 'imageKeyConfigured' : 'imageKeyMissing')),
+          row.writable ? h(React.Fragment, null,
+            h('input', { type: 'password', value: key, placeholder: t('imageKey'), autoComplete: 'off',
+              'aria-label': `${title} ${t('imageKey')}`, disabled: !!pending, maxLength: 2048,
+              onChange: (event) => setKeys((old) => ({ ...old, [provider]: event.target.value })),
+              onKeyDown: (event) => { if (event.key === 'Enter' && key.trim()) { event.preventDefault(); void save(); } },
+            }),
+            h('button', { type: 'button', disabled: !!pending || !key.trim(), onClick: save }, t('imageSaveKey')),
+            row.stored && h('button', { type: 'button', disabled: !!pending,
+              onClick: () => change({ action: 'saveKey', provider, key: '' }) }, t('imageRemoveKey')),
+          ) : !row.configured && h('p', null, t('imageKeyUnavailable')),
+        );
+      }
+
+      function comfyControls({ state: phase, stage, detail }) {
+        const phaseKey = { ready: 'imageReady', missing: 'imageMissing', unsupported: 'imageUnsupported', error: 'imageInstallError' }[phase];
+        const stageKey = `imageStage_${stage}`;
+        const label = phase === 'installing' ? t(Object.hasOwn(en, stageKey) ? stageKey : 'imageInstalling') : phaseKey ? t(phaseKey) : '';
+        return h('div', { className: 'cw-image-actions' },
+          h('p', { role: 'status' }, label),
+          ['unsupported', 'error', 'missing'].includes(phase) && typeof detail === 'string' && detail
+            ? h('p', null, detail.slice(0, 500)) : null,
+          ['missing', 'error'].includes(phase) && h('button', { type: 'button', disabled: !!pending,
+            onClick: () => change({ action: 'installComfy' }) }, t(phase === 'error' ? 'imageRetry' : 'imageInstall')),
+          phase === 'installing' && h('button', { type: 'button', disabled: !!pending,
+            onClick: () => change({ action: 'cancelComfy' }) }, t('imageCancel')),
+        );
+      }
+
+      return h('section', { className: 'cw-image-settings', 'aria-labelledby': 'cw-image-heading' },
+        h('h2', { id: 'cw-image-heading' }, t('imageSettings')),
+        h('p', null, t('imageSettingsIntro')),
+        loading ? h('p', { role: 'status' }, t('imageSettingsLoad'))
+          : !state?.supported && !error ? h('p', null, t('imageSettingsUnavailable')) : null,
+        error && h('p', { className: 'cw-image-error', role: 'alert' }, t(state?.supported ? 'imageSettingsError' : 'imageSettingsReadError')),
+        state?.supported && IMAGE_ROWS.map(([provider, title, description]) => {
+          const row = state.providers[provider];
+          const detailsId = `cw-image-${provider}-details`;
+          return h('div', { key: provider, className: 'cw-image-row' },
+            h('div', { id: detailsId }, h('strong', null, title), h('p', null, t(description)),
+              provider === 'comfy' && h('p', null, t('imageComfyRequirements'))),
+            h('button', { type: 'button', className: 'cw-image-switch', role: 'switch',
+              'aria-label': title, 'aria-describedby': detailsId, 'aria-checked': row.enabled,
+              disabled: !!pending, onClick: () => {
+                if (row.enabled) setKeys((old) => ({ ...old, [provider]: '' }));
+                void change({ action: 'toggle', provider, enabled: !row.enabled });
+              },
+            }),
+            row.enabled && (provider === 'comfy' ? comfyControls(row.setup)
+              : Object.hasOwn(row, 'configured') ? keyControls(provider, title, row) : null),
+          );
+        }),
+      );
     }
 
     function commandQuery(text) {
@@ -4171,6 +4359,12 @@ window.__ModuleLoader__.load({
           const timer = setTimeout(() => {
             if (!active) return;
             disposers.push(
+              install('image generation settings', () => ctx.slots.inject(
+                'plugins.bundle.config',
+                guardInjection('image generation settings', () => ctx.slots.register({
+                  name: 'plugins.bundle.config', key: '@local/claude-code-workbench', locale: NS,
+                }, withBoundary(ImageGenerationSettings))),
+              )),
               install('new session greeting', () => ctx.slots.inject(
                 'conversation.hero.brand.mark',
                 guardInjection('new session greeting', () => ctx.slots.register({
