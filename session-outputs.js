@@ -2,7 +2,7 @@ import { isAbsolute, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const FILE_TOOLS = new Set(['write', 'edit', 'str_replace_editor', 'apply_patch']);
-const IMAGE_TOOL = /(?:^|__)generate_image$/u;
+const IMAGE_TOOL = /(?:^(?:fps_)?|__)generate_image$/u;
 
 function isPath(value) {
   return typeof value === 'string' && value.trim() !== '' && !value.includes('\0');
@@ -105,7 +105,7 @@ const filesSchema = {
 
 export const sessionOutputsProjection = {
   key: 'workbenchOutputs',
-  stateVersion: 2,
+  stateVersion: 3,
   stateSchema: {
     parse(state) {
       if (!state || !(state.cwd === null || isPath(state.cwd)) || !Array.isArray(state.calls) ||

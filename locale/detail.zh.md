@@ -17,6 +17,21 @@ FPS 通过 DSH 原生会话发送消息。模型可以使用当前配置已启�
 
 点模型选择器旁的圆环。FPS 根据 DSH 中已启用的服务商及其 API Key 查询用量，按适配接口实际返回的内容显示余额、已用金额、额度或重置时间。零余额正常显示。接口未适配、查询失败或缺少数据时，相应账户或字段会自动隐藏。会话 Token 和上下文占用估算由 DSH 提供，单独显示。
 
+## 可选生图工具
+
+在「插件 → Four-pointed star → 图片生成」中按需开启。四项开关默认关闭。服务开启并准备就绪后，支持工具调用的会话模型可以按 DSH 的会话权限使用。FPS 将图片保存到 DSH 的生成目录，可用 DSH 原生预览打开。使用云端生图时，提示词会发送给相应服务，请避免在提示词里写入机密信息。
+
+可以在提示词里指定服务商。FPS 默认提示模型优先使用已有生图工具。调用 FPS 时，会按 ComfyUI（已就绪）、Z-Image Turbo、CogView-3-Flash、Pollinations 的顺序选取可用服务。请求失败时会返回错误，由你决定重试或换用其他服务。
+
+- **Z-Image Turbo**。使用官方 Hugging Face Space，无需 API Key。生成的图片约为一百万像素，适合快速试构图和风格。共享 GPU 繁忙时需要排队，额度用尽时需等服务恢复。ZeroGPU 文档给出的匿名额度为每天两分钟 GPU 时间。[ZeroGPU 额度](https://huggingface.co/docs/hub/spaces-zerogpu#usage-tiers)
+- **CogView-3-Flash**。需要智谱开放平台的 API Key。智谱将该 Flash 模型列为免费，适合常规画质需求，实际可用性取决于账号资格、服务限流与运行状态。FPS 只调用这个 Flash 模型。[智谱定价](https://docs.bigmodel.cn/cn/guide/start/pricing)
+- **Pollinations**。需要自己的 Pollinations API Key。即使使用零价模型，服务也可能要求账户有正的可用余额。FPS 在请求前检查 SDXL Lightning 的实时价格，仅在零价时调用。该社区模型适合快速打样，模型说明标明会记录提示词和生成结果。[Pollinations API](https://gen.pollinations.ai/docs)
+- **ComfyUI + Comfy MCP**。开启开关后，在「图片生成」中启动下载，安装 ComfyUI 和官方 Comfy MCP。安装支持 Apple 芯片的 macOS 14 或更新版本、64 位 Windows，以及 glibc 2.28 或更新版本的 x86-64 Linux。安装需要 Git、带 `venv` 和 `pip` 的 Python 3.11–3.13、网络连接、至少 8 GB 内存和 16 GiB 可用磁盘空间。建议使用兼容的 Apple 或 NVIDIA GPU，CPU 生图可能需要几分钟。随附的 SD 1.5 工作流默认在本地生成约 512 × 512 像素的草图，细小文字和写实效果有限。本地生成无需 Comfy 账号或积分。[Comfy MCP](https://github.com/Comfy-Org/comfy-mcp) · [模型与许可](https://huggingface.co/Comfy-Org/stable-diffusion-v1-5-archive)
+
+关闭 ComfyUI 开关后，本地生图停用，已下载的文件保留供下次使用。FPS 通过官方 MCP 运行入门工作流，会话中只开放生图功能。
+
+在「图片生成」设置中，可将 CogView-3-Flash 和 Pollinations 的 Key 保存至 DSH 的凭证存储。也可以在启动 DSH 的环境中设置 `FPS_COGVIEW_API_KEY` 或 `POLLINATIONS_API_KEY`。各服务使用自己的 Key。
+
 ## 自定义
 
 - **外观**。在 DSH「设置 → 通用 → 外观」中选择浅色、深色或跟随系统。FPS 会同步切换侧栏、消息区、输入框和弹层的配色。
