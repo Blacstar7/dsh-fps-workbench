@@ -18,9 +18,9 @@ Live generation was verified with Z-Image Turbo and with the official Comfy MCP 
 
 FPS 在「插件 → Four-pointed star → 图片生成」中新增可选文生图工具。四个开关默认关闭。
 
-- **Z-Image Turbo：**无需 API Key，受 Hugging Face 共享 GPU 的排队和额度限制。
-- **CogView-3-Flash 与 Pollinations：**使用自己的 API Key。调用 Pollinations 前，FPS 会查询目录，确认 SDXL Lightning 社区模型的实时标价为零。
-- **ComfyUI + 官方 Comfy MCP：**开启后点「下载并安装」配置本地生图，可查看进度或取消。入门 SD 1.5 工作流适合生成约 512 像素的草图。
+- **Z-Image Turbo**：无需 API Key，受 Hugging Face 共享 GPU 的排队和额度限制。
+- **CogView-3-Flash 与 Pollinations**：使用自己的 API Key。调用 Pollinations 前，FPS 会查询目录，确认 SDXL Lightning 社区模型的实时标价为零。
+- **ComfyUI + 官方 Comfy MCP**：开启后点「下载并安装」配置本地生图，可查看进度或取消。入门 SD 1.5 工作流适合生成约 512 像素的草图。
 - 支持工具调用的 DSH 模型可通过原生工具系统调用已开启、已就绪的服务。图片进入「输出内容」，可用 DSH 原生预览打开。请求失败时不会自动换服务。
 - 中英文 README 和插件详情补充了配置步骤、使用限制和预期画质。更新已有安装后，请重启 DSH。
 
