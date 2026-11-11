@@ -35,3 +35,18 @@ test('interrupted replies and intermediate tool messages do not publish links', 
   assert.equal(outputs.apply(initial, reply('[Draft](draft.md)', [], true)), initial);
   assert.equal(outputs.apply(initial, reply('[Draft](draft.md)', [{ type: 'tool-call' }])), initial);
 });
+
+test('FPS image calls appear in outputs before the assistant links the image', () => {
+  const initial = outputs.init({ cwd: '/work' });
+  const content = [{ type: 'text', text: 'Saved image to: /dsh/generated/fps-image.png (provider=z-image)' }];
+  const call = outputs.apply(initial, { type: 'tool/call', data: { callId: 'image-1', name: 'fps_generate_image' } });
+  const message = { source: { callId: 'image-1' }, content, isError: false };
+  const direct = outputs.apply(call, { type: 'tool/result', data: { message } });
+  const nested = outputs.apply(initial, {
+    type: 'tool/ptc-dispatch', data: { name: 'fps_generate_image', content, isError: false },
+  });
+  const failed = outputs.apply(call, { type: 'tool/result', data: { message: { ...message, isError: true } } });
+  assert.deepEqual(outputs.wire.view(direct), ['/dsh/generated/fps-image.png']);
+  assert.deepEqual(outputs.wire.view(nested), outputs.wire.view(direct));
+  assert.deepEqual(outputs.wire.view(failed), []);
+});
