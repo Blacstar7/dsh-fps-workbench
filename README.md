@@ -1,6 +1,24 @@
 # Four-pointed star (FPS)
 
+[简体中文](README.zh.md)
+
 FPS is a conversation workspace for DeepSeek Harness (DSH). Track tool progress, open session outputs, and check context and provider usage from one interface. Return to unsent attachments when you switch sessions, and use a configured vision model to interpret images for a text-only model.
+
+## Screenshots
+
+These screenshots were captured in the English interface with simulated task data.
+
+A completed report in light mode, with tool progress in the conversation and the generated file in Outputs.
+
+![Light workspace with a completed report, tool progress, and the Outputs panel](docs/screenshots/01-workspace.png)
+
+Dark mode with the Context sidebar and provider usage popover. Balances and quotas shown are sample data.
+
+![Dark workspace showing context, an API balance, and rolling quotas](docs/screenshots/02-dark-workspace.png)
+
+An unsent draft after switching away and back. The text, image, and file are restored together.
+
+![Composer with an unsent attachment draft](docs/screenshots/03-drafts.png)
 
 ## What you can do
 
@@ -9,7 +27,7 @@ FPS is a conversation workspace for DeepSeek Harness (DSH). Track tool progress,
 - **Composer and attachment drafts.** Paste images or use the Add menu to choose images and files. When you return to a session, its draft text and unsent attachments are restored. Reloading or closing the interface clears unsent attachments. Each message supports up to four images of 8 MB each and six files of 20 MB each.
 - **Images with text-only models.** When the selected model does not support images, FPS looks for an available model with image input in DSH. It sends the image and prompt to that model and passes the resulting description to the current session. If no suitable model is available, the composer keeps the draft and shows an error.
 - **Sessions and workspaces.** The sidebar keeps DSH's workspaces, session search, and settings. Use the back and forward arrows beside the sidebar toggle to revisit sessions opened in the current window.
-- **Commands, references, and voice.** Type `/` to find commands and `@` to reference files or sessions. The composer footer gives you access to the workspace, permissions, model, reasoning effort, and usage. Enable the DSH voice input plugin to see a microphone in the composer.
+- **Commands, references, and voice.** Type `/` to find commands and `@` to reference files or sessions. The composer footer gives you access to the workspace, permissions, model, reasoning effort, and usage. Enable Voice input in DSH’s Plugins page. The microphone appears next to Send and opens voice setup on first use if needed.
 
 FPS sends messages through the native DSH session. Models can use the tools enabled in the current configuration, and DSH runs them or requests approval according to the session permissions.
 
@@ -30,7 +48,7 @@ Use DSH 0.2.2-rc.1 or later with the desktop or Web conversation interface. Feat
 Download the `.tgz` bundle from GitHub Releases and install it through Plugins → Add plugin using the local path option. You can also run the following command with the DSH CLI. [GitHub Releases](https://github.com/Blacstar7/dsh-fps-workbench/releases)
 
 ```sh
-dsh plugin --profile desktop add "/path/to/fps-workbench-0.1.74.tgz"
+dsh plugin --profile desktop add "/path/to/fps-workbench-0.1.75.tgz"
 ```
 
 Replace `desktop` with `web` for the Web profile. Reload the interface if DSH prompts you to.

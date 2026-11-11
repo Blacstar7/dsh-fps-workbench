@@ -1,6 +1,6 @@
 {
   "name": "@local/claude-code-workbench",
-  "version": "0.1.74",
+  "version": "0.1.75",
   "description": "Session outputs, tool progress summaries, attachment drafts, provider usage, and image fallback for DeepSeek Harness.",
   "author": "Blacstar7",
   "license": "MIT",
@@ -27,6 +27,7 @@
     "client.js",
     "cordis.patch.yml",
     "locale/*.json",
+    "locale/detail.*.md",
     "icon.svg",
     "README.md",
     "README.zh.md"
