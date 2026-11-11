@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Four-pointed star",
-    "description": "A DeepSeek Harness workspace with session outputs, tool progress summaries, attachment drafts, provider usage, and image fallback for text-only models.",
+    "description": "A DeepSeek Harness workspace with session outputs, tool summaries, attachment drafts, provider usage, vision fallback, and optional cloud and local image generation.",
     "detail": "locale/detail.en.md"
   }
 }
