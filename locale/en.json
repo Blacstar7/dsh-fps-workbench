@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Four-pointed star",
+    "description": "A DeepSeek Harness workspace with session outputs, tool progress summaries, attachment drafts, provider usage, and image fallback for text-only models.",
+    "detail": "README.md"
+  }
+}
