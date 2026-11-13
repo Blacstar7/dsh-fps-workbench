@@ -11,6 +11,8 @@ const KIMI_WINDOWS = [
   ['limit_month_total', 'monthTotal'],
 ];
 const USER_AGENT = 'DeepSeek-Harness-Claude-Workbench';
+const OPENAI_ORGANIZATION_URL = 'https://api.openai.com/v1/organization';
+const OPENAI_USAGE_DAYS = 7;
 const DREAMINA_CREDIT_CYCLE_MS = 30 * 24 * 60 * 60 * 1000;
 const execFileAsync = promisify(execFile);
 
@@ -117,6 +119,38 @@ function openRouterUsage(payload) {
     ['keyRemaining', number(data?.limit_remaining)],
   ].flatMap(([id, amount]) => amount !== null && amount >= 0 ? [{ id, currency: 'USD', amount }] : []);
   return charges.length ? { charges } : null;
+}
+
+function openAiUsageRows(payload) {
+  if (!Array.isArray(payload?.data) || payload.has_more
+      || payload.data.some((bucket) => !Array.isArray(bucket?.results))) return null;
+  return payload.data.flatMap((bucket) => bucket.results);
+}
+
+function openAiCosts(payload) {
+  const rows = openAiUsageRows(payload);
+  if (!rows) return null;
+  const totals = new Map();
+  for (const { amount } of rows) {
+    const cost = money(amount?.currency?.toUpperCase(), number(amount?.value));
+    if (!cost) return null;
+    totals.set(cost.currency, (totals.get(cost.currency) ?? 0) + cost.amount);
+  }
+  const organizationSpend = Array.from(totals, ([currency, amount]) => ({ currency, amount }));
+  return organizationSpend.length ? { organizationSpend } : null;
+}
+
+function openAiTokens(payload) {
+  const rows = openAiUsageRows(payload);
+  if (!rows) return null;
+  let organizationTokens = 0;
+  for (const row of rows) {
+    const input = number(row?.input_tokens);
+    const output = number(row?.output_tokens);
+    if (input === null || output === null || input < 0 || output < 0) return null;
+    organizationTokens += input + output;
+  }
+  return { organizationTokens };
 }
 
 function adapterFor(baseURL) {
@@ -238,6 +272,32 @@ async function queryUsage({ id, adapter, key }, signal, request) {
   }
 }
 
+async function openAiOrganizationUsage(credentials, ref, signal, request) {
+  if (typeof ref !== 'string') return null;
+  const key = await resolveKey(credentials, { ref }).catch(() => null);
+  if (!key) return null;
+
+  const daySeconds = 24 * 60 * 60;
+  const now = Math.floor(Date.now() / 1000);
+  const today = Math.floor(now / daySeconds) * daySeconds;
+  const params = new URLSearchParams({
+    start_time: String(today - (OPENAI_USAGE_DAYS - 1) * daySeconds),
+    end_time: String(now),
+    bucket_width: '1d',
+    limit: String(OPENAI_USAGE_DAYS),
+  });
+  const targets = [
+    { path: 'costs', parse: openAiCosts },
+    { path: 'usage/completions', parse: openAiTokens },
+  ];
+  const [costs, tokens] = await Promise.all(targets.map(({ path, parse }) =>
+    queryUsage({
+      id: 'openai-organization', key,
+      adapter: { name: 'OpenAI', url: `${OPENAI_ORGANIZATION_URL}/${path}?${params}`, parse },
+    }, signal, request)));
+  return costs || tokens ? { ...costs, ...tokens } : null;
+}
+
 async function readLocalSettings() {
   try {
     const directory = process.env.DSH_HOME || join(homedir(), '.dsh');
@@ -296,6 +356,10 @@ export async function providerUsage(ctx, signal, { request = fetch, localSetting
     seen.set(url, keys);
     return [queryUsage(target, signal, request)];
   });
-  const sections = (await Promise.all([...jobs, dreaminaUsage(local?.dreamina, signal)])).filter(Boolean);
+  const sections = (await Promise.all([
+    ...jobs,
+    openAiOrganizationUsage(credentials, local?.openai?.adminKeyRef, signal, request),
+    dreaminaUsage(local?.dreamina, signal),
+  ])).filter(Boolean);
   return sections;
 }

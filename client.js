@@ -51,9 +51,46 @@ window.__ModuleLoader__.load({
 
     function reportDiagnostic(message) {
       console.error(`[claude-workbench] ${message}`);
+      runtimeFailure = true;
+      compatibilityChanged();
     }
 
     const en = {
+      draft_loading: "Restoring attachments…",
+      draft_saving: "Saving attachments on this device…",
+      draft_saved: "Attachments saved on this device · kept for 30 days",
+      draft_error: "Attachments could not be saved or restored. Keep this window open and retry.",
+      draft_memory: "Attachments are available in this window only.",
+      tasksTitle: "Task status",
+      tasksPlan: "Plan",
+      tasksNoPlan: "No plan has been recorded in this session.",
+      tasksBackground: "Background tasks",
+      tasksEmpty: "No background tasks are reported by DSH.",
+      tasksUnavailable: "Background task status is unavailable. Use the native session header.",
+      tasksSettled: "Finished",
+      tasksNative: "Open native details and controls",
+      task_running: "Running",
+      task_stopping: "Stopping",
+      task_completed: "Completed",
+      task_failed: "Failed",
+      task_killed: "Stopped",
+      task_pending: "Pending",
+      task_in_progress: "In progress",
+      task_unknown: "Unknown",
+      compatTitle: "Compatibility check",
+      compatIntro: "Checks the interfaces available in this client. This does not test a model or execute tools. Missing optional components keep their native entry points.",
+      compatComposer: "Conversation composer",
+      compatFiles: "File attachments and metadata",
+      compatPreview: "Native file preview",
+      compatJobs: "Native background tasks",
+      compatStorage: "Attachment persistence",
+      compatReady: "Available",
+      compatUnavailable: "Unavailable / native fallback",
+      compatRefresh: "Check again",
+      compatCopy: "Copy diagnostic summary",
+      compatCopied: "Copied",
+      compatRuntimeFailure: "A component error was observed. A failed FPS composer falls back to DSH’s native input.",
+
       greetingMorning: 'Good morning',
       greetingAfternoon: 'Good afternoon',
       greetingEvening: 'Good evening',
@@ -140,6 +177,8 @@ window.__ModuleLoader__.load({
       usageDreaminaBalance: 'Credit balance',
       usageKeySpent: 'Key spend',
       usageKeyRemaining: 'Key spending limit remaining',
+      usageOrganizationSpend: 'Org spend · 7 days',
+      usageOrganizationTokens: 'Org tokens · 7 days',
       usageDreaminaReset: 'Estimated subscription credit reset',
       usageExtraBalance: 'Extra usage balance',
       usageFiveHours: '5-hour limit',
@@ -235,6 +274,41 @@ window.__ModuleLoader__.load({
       permissionEnable: 'Enable',
     };
     const zh = {
+      draft_loading: "正在恢复附件…",
+      draft_saving: "正在将附件保存到本机…",
+      draft_saved: "附件已保存到本机 · 保留 30 天",
+      draft_error: "附件保存或恢复失败，请保留当前窗口并重试。",
+      draft_memory: "附件仅保留在当前窗口。",
+      tasksTitle: "任务状态",
+      tasksPlan: "计划步骤",
+      tasksNoPlan: "当前会话尚未记录计划步骤。",
+      tasksBackground: "后台任务",
+      tasksEmpty: "DSH 暂未报告后台任务。",
+      tasksUnavailable: "暂时无法读取后台任务，请使用会话顶栏的原生入口。",
+      tasksSettled: "已结束",
+      tasksNative: "打开原生详情与操作",
+      task_running: "运行中",
+      task_stopping: "正在停止",
+      task_completed: "已完成",
+      task_failed: "失败",
+      task_killed: "已停止",
+      task_pending: "待处理",
+      task_in_progress: "进行中",
+      task_unknown: "未知",
+      compatTitle: "兼容性自检",
+      compatIntro: "检查当前客户端可用接口，不调用模型或执行工具。可选组件缺失时保留 DSH 原生入口。",
+      compatComposer: "会话输入框",
+      compatFiles: "文件附件与信息",
+      compatPreview: "原生文件预览",
+      compatJobs: "原生后台任务",
+      compatStorage: "附件持久化",
+      compatReady: "可用",
+      compatUnavailable: "不可用 / 使用原生入口",
+      compatRefresh: "重新检查",
+      compatCopy: "复制诊断摘要",
+      compatCopied: "已复制",
+      compatRuntimeFailure: "检测到组件异常。FPS 输入框渲染失败时会回退到 DSH 原生输入框。",
+
       greetingMorning: '早上好',
       greetingAfternoon: '下午好',
       greetingEvening: '晚上好',
@@ -321,6 +395,8 @@ window.__ModuleLoader__.load({
       usageDreaminaBalance: '积分余额',
       usageKeySpent: 'Key 已用金额',
       usageKeyRemaining: 'Key 剩余支出额度',
+      usageOrganizationSpend: '组织花费 · 近 7 天',
+      usageOrganizationTokens: '组织 Token · 近 7 天',
       usageDreaminaReset: '订阅积分重置（推算）',
       usageExtraBalance: '加量余额',
       usageFiveHours: '5 小时限额',
@@ -472,6 +548,24 @@ window.__ModuleLoader__.load({
     }
 
     const CSS = `
+      .cw-draft-status { padding: 3px 12px 8px; color: var(--cw-text-muted); font-size: 11px; }
+      .cw-draft-status button, .cw-compatibility button { border: 1px solid var(--cw-border); border-radius: 6px; padding: 4px 8px; margin: 5px; background: transparent; color: inherit; cursor: pointer; }
+      .cw-compatibility { padding: 12px 0 20px; margin-bottom: 20px; border-bottom: 1px solid var(--cw-border); font-size: 12px; }
+      .cw-compatibility summary { font-size: 14px; cursor: pointer; }
+      .cw-long-tasks h3 { font-size: 12px; font-weight: 500; color: var(--cw-text-secondary); margin: 16px 0 8px; }
+      .cw-long-tasks summary { cursor: pointer; font-size: 12px; color: var(--cw-text-secondary); padding: 6px 0; }
+      .cw-task-list, .cw-task-plan { list-style: none; padding: 0; margin: 4px 0; }
+      .cw-task-row, .cw-task-plan li { display: flex; gap: 9px; padding: 7px 0; font-size: 12px; }
+      .cw-task-dot { flex: 0 0 12px; width: 12px; height: 12px; margin-top: 2px; border: 1px solid currentColor; border-radius: 50%; color: var(--cw-text-muted); font-size: 9px; line-height: 11px; text-align: center; }
+      [data-status="pending"] > .cw-task-dot { border-style: dashed; }
+      [data-status="running"] > .cw-task-dot, [data-status="in_progress"] > .cw-task-dot { color: var(--cw-accent); border-width: 2px; }
+      [data-status="failed"] > .cw-task-dot { color: var(--cw-danger); }
+      .cw-task-row[data-status="completed"], .cw-task-plan li[data-status="completed"] { color: var(--cw-text-muted); }
+      .cw-task-main { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+      .cw-task-main > span, .cw-task-main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .cw-task-main small, .cw-native-jobs > small { color: var(--cw-text-muted); font-size: 11px; }
+      .cw-native-jobs { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 9px; }
+
       .cw-image-settings { padding: 4px 0 16px; color: var(--dsw-alias-label-primary); }
       .cw-image-settings h2 { margin: 0 0 5px; font-size: 15px; font-weight: 600; }
       .cw-image-settings p { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 13px; line-height: 1.55; }
@@ -1557,6 +1651,7 @@ window.__ModuleLoader__.load({
 
       componentDidCatch(error) {
         reportDiagnostic(`slot render failed: ${error?.message || error}`);
+        this.props.onFailure?.();
       }
 
       render() {
@@ -1677,6 +1772,7 @@ window.__ModuleLoader__.load({
       }
 
       return h('section', { className: 'cw-image-settings', 'aria-labelledby': 'cw-image-heading' },
+        h(CompatibilityPanel, { t }),
         h('h2', { id: 'cw-image-heading' }, t('imageSettings')),
         h('p', null, t('imageSettingsIntro')),
         loading ? h('p', { role: 'status' }, t('imageSettingsLoad'))
@@ -2339,44 +2435,164 @@ window.__ModuleLoader__.load({
       }
     }
 
-    function createAttachmentDrafts() {
+    // Browser/profile-local storage; file bytes never leave the device until Send.
+    function createAttachmentStorage(indexedDB = globalThis.indexedDB, timeoutMs = 10000) {
+      let database;
+      function open() {
+        if (database) return database;
+        const pending = new Promise((resolve, reject) => {
+          if (!indexedDB) return reject(new Error('Storage unavailable'));
+          let settled = false;
+          const fail = (error) => {
+            if (settled) return;
+            settled = true; clearTimeout(timer); reject(error);
+          };
+          const timer = setTimeout(() => fail(new Error('Storage open timed out')), timeoutMs);
+          let request;
+          try { request = indexedDB.open('fps-attachment-drafts', 1); }
+          catch (error) { fail(error); return; }
+          request.onupgradeneeded = () => {
+            if (settled) { request.transaction?.abort(); return; }
+            request.result.createObjectStore('drafts', { keyPath: 'id' });
+          };
+          request.onerror = () => fail(request.error);
+          request.onblocked = () => fail(new Error('Storage blocked'));
+          request.onsuccess = () => {
+            const db = request.result;
+            if (settled) { db.close(); return; }
+            settled = true; clearTimeout(timer);
+            db.onversionchange = () => { db.close(); database = undefined; };
+            resolve(db);
+          };
+        });
+        database = pending;
+        pending.catch(() => { if (database === pending) database = undefined; });
+        return pending;
+      }
+      async function transaction(mode, action) {
+        const db = await open();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('drafts', mode);
+          let value, settled = false;
+          function finish(error) {
+            if (settled) return;
+            settled = true; clearTimeout(timer);
+            if (error) reject(error); else resolve(value);
+          }
+          const timer = setTimeout(() => {
+            // Abort before allowing a retry: an old write must never commit later.
+            try { tx.abort(); } catch { /* Transaction already settled. */ }
+            finish(new Error('Draft storage timed out'));
+          }, timeoutMs);
+          tx.oncomplete = () => finish();
+          tx.onabort = tx.onerror = () => finish(tx.error || new Error('Draft transaction failed'));
+          try {
+            const request = action(tx.objectStore('drafts'));
+            if (request) request.onsuccess = () => { value = request.result; };
+          } catch (error) {
+            try { tx.abort(); } catch { /* Transaction already settled. */ }
+            finish(error);
+          }
+        });
+      }
+      const encode = (file) => ({ blob: file, name: file.name, type: file.type, lastModified: file.lastModified });
+      const decode = (file) => {
+        if (!(file?.blob instanceof Blob) || typeof file.name !== 'string') throw new Error('Invalid saved attachment');
+        return new File([file.blob], file.name, { type: file.type || '', lastModified: file.lastModified });
+      };
+      return {
+        async load() {
+          const rows = await transaction('readonly', (store) => store.getAll());
+          const valid = [];
+          for (const row of rows) {
+            if (Date.now() - row.updatedAt > 30 * 86400_000) {
+              await transaction('readwrite', (store) => store.delete(row.id));
+              continue;
+            }
+            valid.push({ id: row.id, images: row.images.map(decode), files: row.files.map(decode) });
+          }
+          return valid;
+        },
+        save(id, draft) {
+          return transaction('readwrite', (store) => draft.images.length || draft.files.length
+            ? store.put({ id, updatedAt: Date.now(), images: draft.images.map(encode), files: draft.files.map(encode) })
+            : store.delete(id));
+        },
+        clear: () => transaction('readwrite', (store) => store.clear()),
+      };
+    }
+
+    function createAttachmentDrafts(storage) {
       const drafts = new Map();
       const listeners = new Set();
       const empty = { images: [], files: [], submission: null };
       const read = (id) => drafts.get(id) ?? empty;
-
-      function write(id, draft) {
+      let status = storage ? 'loading' : 'memory';
+      let chain = Promise.resolve();
+      let revision = 0;
+      let hydrationFailed = false;
+      const dirty = new Map();
+      const touched = new Set();
+      const notify = () => { for (const listener of listeners) listener(); };
+      async function hydrate() {
+        if (!storage) return;
+        return storage.load().then((rows) => {
+        for (const row of rows) if (!touched.has(row.id)) drafts.set(row.id,
+          { images: row.images, files: row.files, submission: null });
+        hydrationFailed = false; status = dirty.size ? 'saving' : 'saved'; notify();
+        }).catch(() => { hydrationFailed = true; status = 'error'; notify(); });
+      }
+      const ready = hydrate();
+      chain = ready;
+      function persist(id, draft) {
+        if (!storage) return;
+        const current = ++revision;
+        dirty.set(id, { draft, revision: current });
+        status = 'saving';
+        chain = chain.then(() => storage.save(id, draft)).then(() => {
+          if (dirty.get(id)?.revision === current) dirty.delete(id);
+          status = dirty.size || hydrationFailed ? 'error' : 'saved'; notify();
+        }, () => { status = 'error'; notify(); });
+      }
+      function write(id, draft, durable = true) {
+        touched.add(id);
         if (draft.images.length || draft.files.length || draft.submission) drafts.set(id, draft);
         else drafts.delete(id);
-        for (const listener of listeners) listener();
+        if (durable) persist(id, draft);
+        notify();
       }
-
       return {
-        read,
-        subscribe(listener) {
-          listeners.add(listener);
-          return () => listeners.delete(listener);
-        },
+        read, ready, flush: () => chain,
+        status: () => status,
+        subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
         replace(id, kind, change) {
           const draft = read(id);
-          if (!id || draft.submission) return;
+          if (!id || draft.submission || !['images', 'files'].includes(kind)) return;
           write(id, { ...draft, [kind]: change(draft[kind]) });
         },
         begin(id) {
           const draft = read(id);
-          if (!id || draft.submission) return null;
+          if (!id || draft.submission || status === 'loading') return null;
           const submission = Symbol();
-          write(id, { ...draft, submission });
+          write(id, { ...draft, submission }, false);
           return submission;
         },
         finish(id, submission, accepted = false) {
           const draft = read(id);
           if (draft.submission !== submission) return;
-          write(id, accepted ? empty : { ...draft, submission: null });
+          write(id, accepted ? empty : { ...draft, submission: null }, accepted);
+        },
+        async retry() {
+          await chain;
+          if (hydrationFailed) await hydrate();
+          for (const [id, { draft }] of [...dirty]) persist(id, draft);
+          notify();
+          await chain;
         },
       };
     }
-    const attachmentDrafts = createAttachmentDrafts();
+    const attachmentDrafts = createAttachmentDrafts(
+      typeof window !== 'undefined' && !window.__CLAUDE_WORKBENCH_TEST__ ? createAttachmentStorage() : undefined);
 
     function DraftImage({ file, fallback }) {
       const [previewUrl, setPreviewUrl] = React.useState('');
@@ -3050,6 +3266,167 @@ window.__ModuleLoader__.load({
       );
     }
 
+    const EMPTY_JOBS = { rows: {}, observed: {} };
+    const noopSubscribe = () => () => {};
+    const compatibilityListeners = new Set();
+    let compatibilityRevision = 0;
+    let runtimeFailure = false;
+    function compatibilityChanged() {
+      compatibilityRevision += 1;
+      for (const listener of compatibilityListeners) listener();
+    }
+    function subscribeCompatibility(listener) {
+      compatibilityListeners.add(listener);
+      return () => compatibilityListeners.delete(listener);
+    }
+    const readCompatibilityRevision = () => compatibilityRevision;
+    function compatibilityChecks(services, slots, storageStatus) {
+      const method = (object, key) => typeof object?.[key] === 'function';
+      return [
+        ['compatComposer', ['register', 'inject', 'subscribe', 'entriesOfSlot'].every((key) => method(slots, key)) && !services.composerFallback],
+        ['compatFiles', method(services.fileUploads, 'upload') && method(services.workspaceFiles, 'stat')],
+        ['compatPreview', method(services.sidebarRight, 'openResource')],
+        ['compatJobs', method(services.jobs?.state, 'subscribe') && method(services.jobs?.state, 'getSnapshot') && method(services.jobs, 'watchRows')],
+        ['compatStorage', ['saved', 'saving'].includes(storageStatus)],
+      ];
+    }
+    function CompatibilityPanel({ t }) {
+      React.useSyncExternalStore(subscribeCompatibility, readCompatibilityRevision);
+      const storageStatus = React.useSyncExternalStore(attachmentDrafts.subscribe, attachmentDrafts.status);
+      const [copied, setCopied] = React.useState(false);
+      const checks = compatibilityChecks(runtime, runtime.ctx?.slots, storageStatus);
+      async function copy() {
+        const report = { plugin: 'FPS', checks: Object.fromEntries(checks),
+          runtimeErrorObserved: runtimeFailure, nativeComposerFallback: !!runtime.composerFallback };
+        try { await navigator.clipboard.writeText(JSON.stringify(report, null, 2)); setCopied(true); }
+        catch { setCopied(false); }
+      }
+      return h('details', { className: 'cw-compatibility' },
+        h('summary', null, t('compatTitle')),
+        h('p', { className: 'cw-context-subtle' }, t('compatIntro')),
+        ...checks.map(([key, available]) => h('div', { key, className: 'cw-context-row' },
+          h('span', null, t(key)), h('span', { 'data-ready': available }, t(available ? 'compatReady' : 'compatUnavailable')))),
+        runtimeFailure ? h('p', { role: 'status' }, t('compatRuntimeFailure')) : null,
+        h('button', { type: 'button', onClick: () => { setCopied(false); compatibilityChanged(); } }, t('compatRefresh')),
+        h('button', { type: 'button', onClick: copy }, t(copied ? 'compatCopied' : 'compatCopy')),
+      );
+    }
+    function orderJobs(rows) {
+      const live = (job) => ['running', 'stopping'].includes(job.status);
+      return (Array.isArray(rows) ? rows : []).filter((job) => job && typeof job.id === 'string')
+        .slice().sort((a, b) => Number(live(b)) - Number(live(a)) ||
+          (live(a) ? a.startedAt - b.startedAt : (b.finishedAt ?? b.startedAt) - (a.finishedAt ?? a.startedAt)));
+    }
+    function jobElapsed(job, now) {
+      const end = ['running', 'stopping'].includes(job.status) ? now : job.finishedAt;
+      if (!Number.isFinite(end) || !Number.isFinite(job.startedAt)) return '—';
+      const seconds = Math.max(0, Math.floor((end - job.startedAt) / 1000));
+      return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+    }
+    function TaskPlan({ useProjection, t }) {
+      const todos = useProjection('todos');
+      if (!Array.isArray(todos) || !todos.length) return h('p', { className: 'cw-context-subtle' }, t('tasksNoPlan'));
+      return h('ul', { className: 'cw-task-plan' }, todos.map((todo, index) => h('li', {
+        key: todo.id ?? index, 'data-status': todo.status,
+      }, h('span', { className: 'cw-task-dot', 'aria-label': t(`task_${todo.status}`) },
+        todo.status === 'completed' ? '✓' : todo.status === 'in_progress' ? '·' : ''),
+      h('span', null, todo.content))));
+    }
+    function LongTasks(props) {
+      const t = (key) => translate(props, key);
+      React.useSyncExternalStore(subscribeCompatibility, readCompatibilityRevision);
+      const jobs = runtime.jobs;
+      const subscribe = React.useCallback((listener) => jobs?.state?.subscribe?.(listener) ?? (() => {}), [jobs]);
+      const snapshot = React.useCallback(() => jobs?.state?.getSnapshot?.() ?? EMPTY_JOBS, [jobs]);
+      const state = React.useSyncExternalStore(subscribe, snapshot);
+      const [watchFailed, setWatchFailed] = React.useState(false);
+      React.useEffect(() => {
+        setWatchFailed(false);
+        if (!jobs?.watchRows || !props.sessionId) return;
+        try { return jobs.watchRows(props.sessionId); }
+        catch { setWatchFailed(true); }
+      }, [jobs, props.sessionId]);
+      const rows = orderJobs(state.rows?.[props.sessionId]);
+      const live = rows.filter((job) => ['running', 'stopping'].includes(job.status));
+      const settled = rows.filter((job) => !['running', 'stopping'].includes(job.status));
+      const [now, setNow] = React.useState(Date.now);
+      React.useEffect(() => {
+        if (!live.length) return;
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+      }, [live.length]);
+      function row(job) {
+        const statusKey = `task_${job.status}`;
+        return h('li', { key: job.id, className: 'cw-task-row', 'data-status': job.status },
+          h('span', { className: 'cw-task-dot', 'aria-hidden': true }, job.status === 'completed' ? '✓' : ''),
+          h('div', { className: 'cw-task-main' },
+            h('span', { title: job.label }, job.label || job.kind),
+            h('small', null, t(Object.hasOwn(en, statusKey) ? statusKey : 'task_unknown'), ' · ', jobElapsed(job, now)),
+            job.progress || job.detail ? h('small', { title: job.progress || job.detail }, job.progress || job.detail) : null));
+      }
+      return h('section', { className: 'cw-context-section cw-long-tasks' },
+        h('h2', { className: 'cw-context-heading' }, t('tasksTitle')),
+        h('details', { className: 'cw-task-plan-details', open: undefined },
+          h('summary', null, t('tasksPlan')),
+          h(WorkbenchBoundary, null, h(TaskPlan, { useProjection: props.useProjection, t }))),
+        h('h3', null, t('tasksBackground'), live.length ? ` · ${live.length}` : ''),
+        !jobs || watchFailed ? h('p', { className: 'cw-context-subtle' }, t('tasksUnavailable'))
+          : !rows.length ? h('p', { className: 'cw-context-subtle' }, t('tasksEmpty')) : null,
+        live.length ? h('ul', { className: 'cw-task-list' }, live.map(row)) : null,
+        settled.length ? h('details', { className: 'cw-task-settled' },
+          h('summary', null, `${t('tasksSettled')} · ${settled.length}`),
+          h('ul', { className: 'cw-task-list' }, settled.map(row))) : null,
+        rows.length && props.renderSlot ? h('div', { className: 'cw-native-jobs' },
+          h('small', null, t('tasksNative')),
+          props.renderSlot('workbench.context.jobs', {})) : null,
+      );
+    }
+
+    // Own only the mirror and its subscription; never dispose a native entry.
+    function disposeSafely(dispose) {
+      try { if (typeof dispose === 'function') dispose(); }
+      catch (error) { reportDiagnostic(`integration cleanup failed: ${error?.message || error}`); }
+    }
+    function mirrorNativeEntry(slots, source, target, match, onError) {
+      let active = true, current, dispose, unsubscribe;
+      function sync() {
+        if (!active) return;
+        try {
+          const entry = slots.entriesOfSlot(source).find(match);
+          if (current === entry) return;
+          disposeSafely(dispose); dispose = undefined; current = undefined;
+          if (entry) {
+            dispose = slots.register({ name: target, locale: entry.locale, inject: entry.inject }, entry.component);
+            current = entry;
+          }
+        } catch (error) {
+          // Native registry notifications must never receive our exception.
+          disposeSafely(dispose); dispose = current = undefined;
+          reportDiagnostic(`optional slot mirror unavailable: ${error?.message || error}`);
+          onError?.();
+        }
+      }
+      function cleanup() {
+        if (!active) return;
+        active = false;
+        disposeSafely(unsubscribe); disposeSafely(dispose);
+        unsubscribe = dispose = current = undefined;
+      }
+      try {
+        unsubscribe = slots.subscribe(source, sync);
+        sync();
+      } catch (error) {
+        cleanup();
+        reportDiagnostic(`optional slot subscription unavailable: ${error?.message || error}`);
+        onError?.();
+      }
+      return cleanup;
+    }
+    function bridgeNativeJobs(slots) {
+      return mirrorNativeEntry(slots, 'conversation.session.header.actions', 'workbench.context.jobs',
+        (entry) => entry.options?.id === 'job-list');
+    }
+
     function ContextPanelBase(props) {
       const t = (key) => translate(props, key);
       const state = props.useSessions((value) => value) || {};
@@ -3108,6 +3485,7 @@ window.__ModuleLoader__.load({
           ) : h('div', { className: 'cw-context-subtle' }, t('contextEmpty')),
           categories.length ? h('p', { className: 'cw-context-subtle cw-context-note' }, t('contextEstimate')) : null,
         ),
+        h(WorkbenchBoundary, null, h(LongTasks, { ...props, key: props.sessionId })),
         h(ContextOutputs, { key: props.sessionId, sessionId: props.sessionId, cwd, files: outputFiles, t }),
         h('section', { className: 'cw-context-section' },
           h('details', { className: 'cw-context-details' },
@@ -3157,6 +3535,8 @@ window.__ModuleLoader__.load({
       });
       const percentFormat = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 });
       const creditFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
+      const compareNames = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+      const sortedUsage = [...usage].sort((first, second) => compareNames(first.name, second.name));
       const metric = (id, label, value) => h('div', {
         key: id, className: 'cw-metric-head cw-provider-balance',
       }, h('span', null, label), h('strong', null, value));
@@ -3170,7 +3550,7 @@ window.__ModuleLoader__.load({
           `${creditFormat.format(credits.remaining)} / ${creditFormat.format(credits.total)}`)) : null,
       );
 
-      return h('div', { className: 'cw-provider-usage', 'aria-live': 'polite' }, usage.map((provider) => {
+      return h('div', { className: 'cw-provider-usage', 'aria-live': 'polite' }, sortedUsage.map((provider) => {
         const name = provider.id === 'dreamina' ? t('usageDreaminaName') : provider.name;
         const duplicate = usage.some((other) => other !== provider && other.name === provider.name);
         return h('section', { key: provider.id },
@@ -3183,6 +3563,10 @@ window.__ModuleLoader__.load({
           provider.balance ? metric('extra', t('usageExtraBalance'), formatMoney(provider.balance)) : null,
           provider.charges?.map((charge) => metric(charge.id,
             t(charge.id === 'spent' ? 'usageKeySpent' : 'usageKeyRemaining'), formatMoney(charge))),
+          provider.organizationSpend?.length
+            ? metric('organization-spend', t('usageOrganizationSpend'), provider.organizationSpend.map(formatMoney).join(' · ')) : null,
+          Number.isFinite(provider.organizationTokens)
+            ? metric('organization-tokens', t('usageOrganizationTokens'), formatTokenCount(provider.organizationTokens)) : null,
           provider.windows?.filter(({ id }) => Object.hasOwn(USAGE_WINDOW_LABELS, id)).map(windowView),
           Number.isFinite(provider.credits)
             ? metric('credits', t('usageDreaminaBalance'), creditFormat.format(provider.credits)) : null,
@@ -3198,7 +3582,7 @@ window.__ModuleLoader__.load({
       const meter = contextMeter(useProjection('contextPressure'));
       const usage = useProjection('tokenUsage');
       const [open, setOpen] = React.useState(false);
-      const { triggerRef, menuRef, position } = useAnchoredPopup(open, 340, 660);
+      const { triggerRef, menuRef, position } = useAnchoredPopup(open, 340, 720);
       const ready = Boolean(position);
       const popupId = React.useId();
       const rows = [
@@ -3532,6 +3916,7 @@ window.__ModuleLoader__.load({
       const readAttachments = React.useCallback(() => attachmentDrafts.read(sessionId), [sessionId]);
       const { images, files, submission: draftSubmission } =
         React.useSyncExternalStore(attachmentDrafts.subscribe, readAttachments);
+      const draftStorageStatus = React.useSyncExternalStore(attachmentDrafts.subscribe, attachmentDrafts.status);
       const [commandSending, setSending] = React.useState(false);
       const sending = commandSending || Boolean(draftSubmission);
       const [recognizing, setRecognizing] = React.useState(false);
@@ -3605,6 +3990,7 @@ window.__ModuleLoader__.load({
       }, [commandLauncherOpen]);
       const running = Boolean(session?.running);
       const unavailable = Boolean(props.disabled || props.blocked || !sessionId || !promptAllowed);
+      const draftLoading = draftStorageStatus === 'loading';
       const voiceLocked = unavailable || sending;
       const previousVoiceDraft = voiceDraft.current;
       voiceDraft.current = {
@@ -3645,7 +4031,7 @@ window.__ModuleLoader__.load({
         },
       }), []);
       const t = (key) => translate(props, key);
-      const canSend = Boolean(!unavailable && !sending && (text.trim() || images.length || files.length));
+      const canSend = Boolean(!unavailable && !draftLoading && !sending && (text.trim() || images.length || files.length));
       const slashQuery = images.length === 0 ? commandQuery(text) : null;
       const commandMenuVisible = commandLauncherOpen || (slashQuery !== null && commandDismissed !== text);
       const commandChoices = commandLauncherOpen && text.trim() && slashQuery === null
@@ -3728,6 +4114,7 @@ window.__ModuleLoader__.load({
       }, [commandMenuVisible, sessionId]);
 
       function addImageFiles(fileList) {
+        if (draftLoading) { setError(t('draft_loading')); return; }
         const available = Math.max(0, MAX_IMAGES - readAttachments().images.length);
         const incoming = Array.from(fileList || []).filter((file) => file?.type?.startsWith('image/')).slice(0, available);
         if (incoming.length === 0) return;
@@ -3749,6 +4136,7 @@ window.__ModuleLoader__.load({
       }
 
       function addDraftFiles(fileList) {
+        if (draftLoading) { setError(t('draft_loading')); return; }
         const incoming = Array.from(fileList || []).filter(Boolean);
         if (incoming.length === 0) return;
         if (readAttachments().files.length + incoming.length > MAX_FILES) {
@@ -4105,7 +4493,7 @@ window.__ModuleLoader__.load({
           ) : null,
           h('div', { className: 'cw-composer-row' },
             h(ComposerAddMenu, {
-              disabled: unavailable || sending,
+              disabled: unavailable || draftLoading || sending,
               t,
               onImages: () => {
                 if (images.length < MAX_IMAGES) fileInputRef.current?.click();
@@ -4174,6 +4562,12 @@ window.__ModuleLoader__.load({
             ),
           ),
           props.accessory || null,
+          (images.length || files.length || ['loading', 'error'].includes(draftStorageStatus))
+            ? h('div', { className: 'cw-draft-status', role: 'status' },
+              t(`draft_${draftStorageStatus}`),
+              draftStorageStatus === 'error' ? h('button', {
+                type: 'button', onClick: () => attachmentDrafts.retry(),
+              }, t('imageRetry')) : null) : null,
           error ? h('div', { className: 'cw-composer-error', role: 'alert' }, error) : null,
           props.blocked?.reason ? h('div', { className: 'cw-composer-error' }, props.blocked.reason) : null,
         ),
@@ -4191,41 +4585,55 @@ window.__ModuleLoader__.load({
 
     const HeroGreeting = withBoundary(HeroGreetingBase);
     const ToolCallMessage = withBoundary(ToolCallMessageBase);
-    const Composer = withBoundary(ComposerBase);
+    function Composer(props, fallback) {
+      const required = ['useSession', 'useAccess', 'useProjection', 'useSessions', 'renderSlot'];
+      if (required.some((name) => typeof props[name] !== 'function')) {
+        fallback();
+        return null;
+      }
+      return h(WorkbenchBoundary, { onFailure: fallback }, h(ComposerBase, props));
+    }
     const ContextPanel = withBoundary(ContextPanelBase);
     const HeaderContextButton = withBoundary(ContextButton);
 
     function registerComposer(slots) {
-      const disposeComposer = slots.register({
-        name: 'conversation.composer.bar', priority: -1,
-        children: { [WORKBENCH_VOICE_SLOT]: { kind: 'single', scope: 'session' } },
-      }, Composer);
-      let voiceEntry;
-      let disposeVoice;
-      function syncVoice() {
-        // DSH owns the original activity slot. Reuse its microphone contribution
-        // in a Workbench child slot without redeclaring the native slot.
-        const entry = slots.entriesOfSlot(NATIVE_INPUT_ACTIVITY)[0];
-        if (entry === voiceEntry) return;
-        disposeVoice?.();
-        disposeVoice = undefined;
-        voiceEntry = entry;
-        if (entry?.locale !== 'voice-input') return;
-        try {
-          disposeVoice = slots.register({
-            name: WORKBENCH_VOICE_SLOT, locale: entry.locale, inject: entry.inject,
-          }, entry.component);
-        } catch (error) {
-          reportDiagnostic(`voice input activation failed: ${error?.message || error}`);
-        }
+      let active = true, fallbackPending = false, disposeComposer, disposeVoice;
+      function cleanup() {
+        if (!active) return;
+        active = false;
+        // Child mirrors/subscriptions go first, before their parent slot vanishes.
+        disposeSafely(disposeVoice); disposeSafely(disposeComposer);
+        disposeVoice = disposeComposer = undefined;
       }
-      const unsubscribe = slots.subscribe(NATIVE_INPUT_ACTIVITY, syncVoice);
-      syncVoice();
-      return () => {
-        unsubscribe();
-        disposeVoice?.();
-        disposeComposer();
-      };
+      function fallback() {
+        if (!active || fallbackPending) return;
+        fallbackPending = true;
+        // This callback belongs to one registration, never a newer replacement.
+        queueMicrotask(() => {
+          if (!active) return;
+          runtime.composerFallback = true;
+          cleanup(); compatibilityChanged();
+        });
+      }
+      if (!['register', 'subscribe', 'entriesOfSlot'].every((key) => typeof slots?.[key] === 'function')) {
+        runtime.composerFallback = true; compatibilityChanged(); return cleanup;
+      }
+      try {
+        disposeComposer = slots.register({
+          name: 'conversation.composer.bar', priority: -1,
+          children: { [WORKBENCH_VOICE_SLOT]: { kind: 'single', scope: 'session' } },
+        }, (props) => Composer(props, fallback));
+        disposeVoice = mirrorNativeEntry(slots, NATIVE_INPUT_ACTIVITY, WORKBENCH_VOICE_SLOT,
+          (entry) => entry.locale === 'voice-input', fallback);
+        if (fallbackPending) {
+          runtime.composerFallback = true; cleanup();
+        } else runtime.composerFallback = false;
+      } catch (error) {
+        runtime.composerFallback = true; cleanup();
+        reportDiagnostic(`composer integration unavailable: ${error?.message || error}`);
+      }
+      compatibilityChanged();
+      return cleanup;
     }
 
     return {
@@ -4233,7 +4641,7 @@ window.__ModuleLoader__.load({
         'slots', 'locale', 'shortcuts', 'configForms', 'uiWorkspace', 'workspaces', 'sessions', 'remote',
       ],
       ...(typeof window !== 'undefined' && window.__CLAUDE_WORKBENCH_TEST__
-        ? { testHooks: { commandQuery, filterCommandRows, commandRowsFromDescriptors, commandInsertion, executeHostCommand, summarizeToolCall, summarizeWorkGroup, isDangerousPermission, rootModelGroup, formatTokenCount, contextPercent, mentionQuery, referenceRows, submitMode, formatBytes, voiceDraftInsertion, createSessionHistory, createAttachmentDrafts } }
+        ? { testHooks: { commandQuery, filterCommandRows, commandRowsFromDescriptors, commandInsertion, executeHostCommand, summarizeToolCall, summarizeWorkGroup, isDangerousPermission, rootModelGroup, formatTokenCount, contextPercent, mentionQuery, referenceRows, submitMode, formatBytes, voiceDraftInsertion, createSessionHistory, createAttachmentDrafts, createAttachmentStorage, compatibilityChecks, orderJobs, jobElapsed, registerComposer, bridgeNativeJobs } }
         : {}),
       apply(ctx) {
         runtime.ctx = ctx;
@@ -4241,6 +4649,16 @@ window.__ModuleLoader__.load({
         runtime.workspaces = ctx.get('workspaces');
         runtime.sessions = ctx.get('sessions');
         runtime.composerSettings = ctx.configForms.get('ui-conversation');
+        try {
+          ctx.inject(['jobs'], (scope) => {
+            scope.effect(() => {
+              const jobs = scope.get('jobs'); runtime.jobs = jobs; compatibilityChanged();
+              return () => { if (runtime.jobs === jobs) { runtime.jobs = undefined; compatibilityChanged(); } };
+            }, 'fps: native background jobs');
+          });
+        } catch (error) {
+          reportDiagnostic(`background jobs unavailable: ${error?.message || error}`);
+        }
         for (const [property, namespace] of [
           ['commandsRemote', 'commands'], ['fileReferences', 'fileReferences'],
           ['sessionReferences', 'sessionReferenceResolver'], ['permissionPresets', 'permissionPresets'],
@@ -4249,9 +4667,9 @@ window.__ModuleLoader__.load({
           ctx.inject([`remote.${namespace}`], (scope) => {
             scope.effect(() => {
               const service = scope.remote?.[namespace];
-              runtime[property] = service;
+              runtime[property] = service; compatibilityChanged();
               return () => {
-                if (runtime[property] === service) runtime[property] = undefined;
+                if (runtime[property] === service) { runtime[property] = undefined; compatibilityChanged(); }
               };
             }, `claude-workbench: ${namespace}`);
           });
@@ -4362,7 +4780,7 @@ window.__ModuleLoader__.load({
               install('image generation settings', () => ctx.slots.inject(
                 'plugins.bundle.config',
                 guardInjection('image generation settings', () => ctx.slots.register({
-                  name: 'plugins.bundle.config', key: 'dsh-fps-workbench', locale: NS,
+                  name: 'plugins.bundle.config', key: '@local/claude-code-workbench', locale: NS,
                 }, withBoundary(ImageGenerationSettings))),
               )),
               install('new session greeting', () => ctx.slots.inject(
@@ -4401,8 +4819,10 @@ window.__ModuleLoader__.load({
                   'sidebar.right.pane.tab',
                   guardInjection('context body', () => ctx.slots.register({
                     name: 'sidebar.right.pane.tab', key: CONTEXT_TAB,
+                    children: { 'workbench.context.jobs': { kind: 'single', scope: 'session' } },
                   }, ContextPanel)),
                 );
+                const disposeJobs = install('native job details', () => bridgeNativeJobs(ctx.slots));
                 const disposeHeader = ctx.slots.inject(
                   'conversation.session.header.utilities',
                   guardInjection('session header utilities', () => ctx.slots.register({
@@ -4410,6 +4830,7 @@ window.__ModuleLoader__.load({
                   }, HeaderContextButton)),
                 );
                 return () => {
+                  disposeJobs();
                   disposeHeader();
                   disposeBody();
                   disposeType();
