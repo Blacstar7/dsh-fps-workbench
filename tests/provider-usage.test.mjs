@@ -78,3 +78,41 @@ test('native API key records work without machine-specific credential names', as
     { id: 'kimi-coding', name: 'Kimi Coding', windows: [{ id: 'fiveHours', ratio: 0.25 }], balance: null },
   ]);
 });
+
+test('OpenAI organization usage uses the separate admin credential and reports real totals', async () => {
+  const ctx = host({
+    openai: { baseURL: 'https://api.openai.com/v1', apiKeyEnv: 'OPENAI_API_KEY' },
+  }, {
+    refs: { OPENAI_API_KEY: 'project-test', TEST_OPENAI_ADMIN: 'admin-test' },
+  });
+  const paths = [];
+  const request = async (address, options) => {
+    const url = new URL(address);
+    paths.push(url.pathname);
+    assert.equal(url.origin, 'https://api.openai.com');
+    assert.equal(options.headers.Authorization, 'Bearer admin-test');
+    assert.equal(options.redirect, 'error');
+    assert.equal(url.searchParams.get('bucket_width'), '1d');
+    assert.equal(url.searchParams.get('limit'), '7');
+    const duration = Number(url.searchParams.get('end_time')) - Number(url.searchParams.get('start_time'));
+    assert.ok(duration >= 6 * 86_400 && duration < 7 * 86_400);
+    const results = url.pathname.endsWith('/costs')
+      ? [{ amount: { currency: 'usd', value: 0.25 } }, { amount: { currency: 'usd', value: 0.5 } }]
+      : [{ input_tokens: 1200, input_cached_tokens: 300, output_tokens: 150 }];
+    return Response.json({ data: [{ results }], has_more: false });
+  };
+
+  const signal = new AbortController().signal;
+  assert.deepEqual(await providerUsage(ctx, signal, { request, localSettings: async () => null }), []);
+  assert.deepEqual(paths, []);
+  const localSettings = async () => ({ openai: { adminKeyRef: 'TEST_OPENAI_ADMIN' } });
+  assert.deepEqual(await providerUsage(ctx, signal, { request, localSettings }), [
+    {
+      id: 'openai-organization',
+      name: 'OpenAI',
+      organizationSpend: [{ currency: 'USD', amount: 0.75 }],
+      organizationTokens: 1350,
+    },
+  ]);
+  assert.deepEqual(paths, ['/v1/organization/costs', '/v1/organization/usage/completions']);
+});
