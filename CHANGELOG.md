@@ -1,5 +1,29 @@
 # Changelog · 更新日志
 
+## [0.1.79](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.79) — 2026-11-13
+
+### English
+
+- Persist unsent image/file drafts in device-local IndexedDB, restore them after reload, and keep failed submissions. Accepted drafts and explicit removals are cleared; attachments expire on load after 30 days without an attachment edit. Storage failures offer retry.
+- Add a Context task-status section with native plan steps, live background jobs, elapsed time, and collapsed terminal states. Native job details, logs, permissions, and stop behavior remain in DSH.
+- Add passive compatibility checks and a credential-free diagnostic summary to plugin settings. Fall back to the native composer when the input contract is unavailable or the FPS composer fails to render.
+- Harden native integration cleanup: composer fallback releases the voice mirror and subscription, stale fallback callbacks cannot remove a newer composer, and optional job/voice registration errors stay isolated. Locate the native voice contribution regardless of slot order. Draft storage operations time out after 10 seconds; loading drafts no longer locks text editing or voice input.
+- Rewrite both READMEs around long-task visibility, output discovery, draft recovery, usage, and native integration. Add separate English and Chinese desktop screenshot sets, and update installation/migration guidance.
+- Add optional OpenAI organization spend and token totals when a separate local credential reference is configured. Credentials and personal usage configuration are never bundled.
+- Include 12 fullscreen dark-mode screenshots with visible sidebars, bilingual guides, and a storefront screenshot manifest in the published package.
+- Verified on macOS DSH 0.2.2-rc.2, including real microphone transcription and session switching with attachment drafts. This is not a guarantee of compatibility with every host version or voice provider.
+
+### 简体中文
+
+- 未发送图片和文件写入本机 IndexedDB，重载后恢复，发送失败保留。发送被接收或手动移除后清除；连续 30 天未修改的附件在下次加载时过期。存储失败支持重试。
+- 上下文新增任务状态区，显示原生计划步骤、后台任务、实际用时和折叠的结束状态。详情、日志、权限和停止逻辑继续使用 DSH 原生实现。
+- 插件设置新增兼容性自检和不含凭据的诊断摘要。输入框接口不匹配或 FPS 输入框渲染失败时回退原生输入框。
+- 加固原生接口清理：输入框回退时同时释放语音镜像及订阅，旧回退回调不会撤下新输入框，后台任务和语音插槽注册异常独立隔离。语音入口不再依赖插槽排序。草稿存储单次操作超过 10 秒会报错并允许重试，加载草稿不再锁住文字编辑和语音输入。
+- 重写中英文 README，突出长任务、产物、草稿、用量和原生集成，分别配套中英文桌面截图，并更新安装与迁移说明。
+- 当用户另行配置本机凭据引用时，可显示 OpenAI 组织花费与 Token 统计；安装包不包含凭据或个人用量配置。
+- 发布包包含 12 张展开侧栏的全屏深色截图、双语指南和市场截图清单。
+- 已在 macOS DSH 0.2.2-rc.2 验证，包括真实麦克风转写、切换会话和附件草稿共存；不代表所有宿主版本和语音服务均已验证。
+
 ## [0.1.78](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.78) — 2026-11-13
 
 ### English

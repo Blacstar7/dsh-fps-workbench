@@ -1,7 +1,7 @@
 {
   "name": "dsh-fps-workbench",
-  "version": "0.1.78",
-  "description": "Session outputs, tool summaries, attachment drafts, provider usage, and optional image tools for DeepSeek Harness.",
+  "version": "0.1.79",
+  "description": "A DSH conversation workbench with long-task status, outputs, tool summaries, persistent attachment drafts, usage, compatibility checks, and optional image tools.",
   "author": "Blacstar7",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,11 @@
     "url": "git+https://github.com/Blacstar7/dsh-fps-workbench.git"
   },
   "homepage": "https://github.com/Blacstar7/dsh-fps-workbench#readme",
-  "keywords": ["dsh-plugin", "deepseek-harness", "workbench"],
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "workbench"
+  ],
   "engines": {
     "dsh": ">=0.2.2-rc.1"
   },
@@ -34,7 +38,10 @@
     "icon.svg",
     "README.md",
     "README.zh.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "screenshots.json",
+    "docs/screenshots/en/*.jpg",
+    "docs/screenshots/zh/*.jpg"
   ],
   "dsh": {
     "bundle": {

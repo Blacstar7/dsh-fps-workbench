@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Four-pointed star",
-    "description": "A DeepSeek Harness workspace with session outputs, tool summaries, attachment drafts, provider usage, vision fallback, and optional cloud and local image generation.",
+    "description": "A DeepSeek Harness conversation workbench with long-task status, session outputs, tool summaries, persistent attachment drafts, native voice integration, provider usage, compatibility checks, vision fallback, and optional image generation.",
     "detail": "locale/detail.en.md"
   }
 }
