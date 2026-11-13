@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Four-pointed star",
-    "description": "DeepSeek Harness 会话工作台，支持会话产物、工具摘要、附件草稿、服务商用量、纯文本模型识图，以及可选的云端和本地生图。",
+    "description": "DeepSeek Harness 会话工作台，支持长任务状态、会话产物、工具摘要、附件持久化、原生语音接入、服务商用量、兼容性自检、识图转接和可选生图。",
     "detail": "locale/detail.zh.md"
   }
 }
