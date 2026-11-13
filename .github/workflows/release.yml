@@ -50,10 +50,22 @@ jobs:
           registry_url="https://registry.npmjs.org/$package/$version"
           status=$(curl --silent --show-error --retry 3 --output "$RUNNER_TEMP/npm-version.json" --write-out '%{http_code}' "$registry_url")
           case "$status" in
-            404) npm publish "$archive" --access public ;;
-            200) jq -e --arg integrity "$integrity" '.dist.integrity == $integrity' "$RUNNER_TEMP/npm-version.json" ;;
+            404)
+              npm publish "$archive" --access public
+              for attempt in {1..60}; do
+                status=$(curl --silent --show-error --retry 3 --output "$RUNNER_TEMP/npm-version.json" --write-out '%{http_code}' "$registry_url")
+                if [[ "$status" == 200 ]]; then break; fi
+                sleep 15
+              done
+              if [[ "$status" != 200 ]]; then
+                printf 'npm accepted %s but it is still pending. Rerun after it becomes public.\n' "$archive" >&2
+                exit 1
+              fi
+              ;;
+            200) ;;
             *) printf 'Unexpected npm registry status %s\n' "$status" >&2; exit 1 ;;
           esac
+          jq -e --arg integrity "$integrity" '.dist.integrity == $integrity' "$RUNNER_TEMP/npm-version.json"
           cp "$archive" "fps-workbench-$version.tgz"
       - name: Publish the same archive to GitHub
         env:
