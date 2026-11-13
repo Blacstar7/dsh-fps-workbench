@@ -1,5 +1,7 @@
 # Four-pointed star (FPS)
 
+[GitHub repository](https://github.com/Blacstar7/dsh-fps-workbench) · [Plugin catalog](https://awesome-dsh-plugin.com/p/Blacstar7/dsh-fps-workbench/) · [Changelog](https://github.com/Blacstar7/dsh-fps-workbench/blob/main/CHANGELOG.md) · [npm](https://www.npmjs.com/package/dsh-fps-workbench)
+
 FPS is a conversation workbench for DeepSeek Harness (DSH): follow long tasks, keep unsent drafts, and find the finished files. It combines tool summaries, task states, native output previews, local attachment recovery, provider usage, and optional image tools. Light and dark appearances follow DSH. Sessions, execution permissions, voice transcription, and previews remain native.
 
 ## What you can do

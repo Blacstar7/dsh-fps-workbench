@@ -1,5 +1,7 @@
 # Four-pointed star（FPS）
 
+[GitHub 仓库](https://github.com/Blacstar7/dsh-fps-workbench) · [插件目录收录页](https://awesome-dsh-plugin.com/p/Blacstar7/dsh-fps-workbench/) · [更新日志](https://github.com/Blacstar7/dsh-fps-workbench/blob/main/CHANGELOG.md) · [npm](https://www.npmjs.com/package/dsh-fps-workbench)
+
 FPS 是 DeepSeek Harness（DSH）的会话工作台：看清长任务进度，留住未发送的草稿，找到最终产物。工具摘要、任务状态、原生产物预览、本机附件恢复、服务商用量和可选图片工具集中在同一处。浅色与深色外观跟随 DSH；会话、执行权限、语音转写和预览继续使用原生系统。
 
 ## 主要功能
