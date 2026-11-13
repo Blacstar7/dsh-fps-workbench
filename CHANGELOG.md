@@ -1,5 +1,19 @@
 # Changelog · 更新日志
 
+## [0.1.77](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.77)
+
+### English
+
+- FPS is now packaged as `dsh-fps-workbench` for npm and the DSH Discover index. The GitHub repository and community catalog listing stay the same. Discover availability follows the catalog and mirror refresh.
+- If you installed v0.1.76 or earlier, save unsent attachments, remove `@local/claude-code-workbench`, and install `dsh-fps-workbench` in the same DSH profile. This is a one-time switch. The new package reads the same image settings, saved credentials, and local usage settings. DSH conversations, workspaces, and text drafts in the same client profile remain available.
+- Version tags trigger the release workflow for npm and GitHub. A prebuilt `.tgz` remains available through GitHub Releases.
+
+### 简体中文
+
+- FPS 改用公开包名 `dsh-fps-workbench`，供 npm 安装和 DSH「发现」索引收录。GitHub 仓库和社区目录条目沿用原来的地址。「发现」中的可见时间取决于目录和镜像刷新。
+- 已安装 v0.1.76 或更早版本的用户，先保存未发送的附件，再卸载 `@local/claude-code-workbench`，在同一个 DSH 配置安装 `dsh-fps-workbench`。这一步只需做一次。新版沿用生图设置、已保存凭证和本地用量配置。原配置中的会话、工作区和文字草稿可以继续使用。
+- 以后推送版本标签会触发 npm 和 GitHub 发布流程。GitHub Releases 继续提供预打包的 `.tgz`。
+
 ## [0.1.76](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.76) — 2026-11-11
 
 ### English

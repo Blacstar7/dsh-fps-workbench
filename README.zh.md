@@ -60,13 +60,17 @@ FPS 通过 DSH 原生会话发送消息。模型可以使用当前配置已启�
 
 使用 DSH 0.2.2-rc.1 或更新版本的桌面端或 Web 会话界面。语音输入和文件预览等功能需要当前 DSH 配置启用相应组件。
 
-从 [GitHub 最新版本](https://github.com/Blacstar7/dsh-fps-workbench/releases/latest)下载 `.tgz` 安装包，在 DSH「插件 → 添加插件」中选择本地路径。已安装 DSH 命令行时也可运行以下命令。
+在 DSH「插件 → 添加插件」中选择 npm 仓库，输入 `dsh-fps-workbench`。也可从 [GitHub 最新版本](https://github.com/Blacstar7/dsh-fps-workbench/releases/latest)下载 `.tgz` 安装包，再选择本地路径安装。已安装 DSH 命令行时也可运行以下命令。
 
 ```sh
-dsh plugin --profile desktop add "/实际路径/fps-workbench-0.1.76.tgz"
+dsh plugin --profile desktop add dsh-fps-workbench
 ```
 
-Web 配置将 `desktop` 换成 `web`。更新已有安装后，请重启 DSH 以加载新版生图工具。
+Web 配置将 `desktop` 换成 `web`。按 DSH 提示重启。
+
+### 从 v0.1.76 或更早版本换装
+
+先保存未发送的附件。在「插件 → 已安装」卸载包名为 `@local/claude-code-workbench` 的旧版 Four-pointed star，再在同一个 DSH 配置中安装 `dsh-fps-workbench`，按提示重启。新版会读取已有的生图开关、已保存的凭证和本地用量配置。DSH 会话和工作区保存在原配置里，同一浏览器或桌面配置中的文字草稿也可继续使用。未发送的附件只保存在页面内存中，重新加载会清除。
 
 ### 已知问题
 
