@@ -1,5 +1,7 @@
 # Four-pointed star（FPS）
 
+[GitHub 仓库](https://github.com/Blacstar7/dsh-fps-workbench) · [插件目录收录页](https://awesome-dsh-plugin.com/p/Blacstar7/dsh-fps-workbench/) · [更新日志](https://github.com/Blacstar7/dsh-fps-workbench/blob/main/CHANGELOG.md) · [npm](https://www.npmjs.com/package/dsh-fps-workbench)
+
 **看清进度，留住草稿，找到产物。**
 
 [English](README.md) · [安装](#安装) · [更新日志](CHANGELOG.md) · [详细指南](locale/detail.zh.md)
