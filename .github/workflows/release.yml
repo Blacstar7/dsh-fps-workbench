@@ -1,0 +1,75 @@
+name: Publish FPS
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+      - name: Validate release tag
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          node --input-type=module <<'JS'
+          import fs from 'node:fs'
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+          if (pkg.name !== 'dsh-fps-workbench' ||
+              !/^\d+\.\d+\.\d+$/.test(pkg.version) ||
+              process.env.GITHUB_REF_NAME !== `v${pkg.version}`) {
+            throw new Error('Tag must match the stable FPS version in package.json')
+          }
+          JS
+      - name: Run tests
+        run: node --test tests/*.test.mjs
+      - name: Pack and publish to npm
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+        run: |
+          npm install --global npm@12.2.2
+          version="${GITHUB_REF_NAME#v}"
+          package="dsh-fps-workbench"
+          npm pack
+          archive="$package-$version.tgz"
+          integrity="sha512-$(openssl dgst -sha512 -binary "$archive" | openssl base64 -A)"
+          registry_url="https://registry.npmjs.org/$package/$version"
+          status=$(curl --silent --show-error --retry 3 --output "$RUNNER_TEMP/npm-version.json" --write-out '%{http_code}' "$registry_url")
+          case "$status" in
+            404) npm publish "$archive" --access public ;;
+            200) jq -e --arg integrity "$integrity" '.dist.integrity == $integrity' "$RUNNER_TEMP/npm-version.json" ;;
+            *) printf 'Unexpected npm registry status %s\n' "$status" >&2; exit 1 ;;
+          esac
+          cp "$archive" "fps-workbench-$version.tgz"
+      - name: Publish the same archive to GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          archive="fps-workbench-$version.tgz"
+          if gh release view "$GITHUB_REF_NAME" --json assets > "$RUNNER_TEMP/release.json"; then
+            if jq -e --arg archive "$archive" '.assets[] | select(.name == $archive)' "$RUNNER_TEMP/release.json" >/dev/null; then
+              gh release download "$GITHUB_REF_NAME" --pattern "$archive" --dir "$RUNNER_TEMP"
+              cmp "$archive" "$RUNNER_TEMP/$archive"
+            else
+              gh release upload "$GITHUB_REF_NAME" "$archive"
+            fi
+          else
+            awk '/^## \[/{if (found) exit; found=1; next} found{print}' CHANGELOG.md > "$RUNNER_TEMP/release-notes.md"
+            gh release create "$GITHUB_REF_NAME" "$archive" --verify-tag --latest \
+              --title "FPS Workbench $version" --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
