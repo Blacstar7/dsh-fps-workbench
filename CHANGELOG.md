@@ -1,5 +1,21 @@
 # Changelog · 更新日志
 
+## [0.1.80](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.80) — 2026-11-13
+
+### English
+
+- Fix the missing FPS settings panel after installation as `dsh-fps-workbench`: bind the panel to the published package name instead of the legacy local package name. Image-generation settings and passive compatibility checks are visible again.
+- Add GitHub repository, plugin catalog, changelog, and npm links to both READMEs and both in-app detail pages.
+- Keep existing settings, credential references, usage configuration, attachment drafts, and persistent context-tab identifiers unchanged. Updating from v0.1.79 does not require uninstalling or reconfiguring FPS; it also replaces the temporary local settings-panel correction.
+- Add a regression test that activates the real client plugin, resolves the settings contribution using the package manifest name, and verifies cleanup and reactivation. Native input, voice, and background-task integration logic is unchanged.
+
+### 简体中文
+
+- 修复以 `dsh-fps-workbench` 安装后 FPS 设置面板缺失的问题：设置区改为绑定正式发布包名，不再绑定旧本地包名。生图设置和被动兼容性自检恢复显示。
+- 中英文 README 及应用内详情均补充 GitHub 仓库、插件目录、更新日志和 npm 链接。
+- 沿用原有设置、凭据引用、用量配置、附件草稿和上下文标签存储标识。从 v0.1.79 更新无需卸载或重新配置，也会替代此前的本机临时设置面板修正。
+- 新增回归测试，实际激活客户端插件，按包清单名称查找设置区，并验证卸载清理和重新激活。原生输入、语音和后台任务的集成逻辑不变。
+
 ## [0.1.79](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.79) — 2026-11-13
 
 ### English

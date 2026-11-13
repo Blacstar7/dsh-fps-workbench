@@ -1,6 +1,6 @@
 {
   "name": "dsh-fps-workbench",
-  "version": "0.1.79",
+  "version": "0.1.80",
   "description": "A DSH conversation workbench with long-task status, outputs, tool summaries, persistent attachment drafts, usage, compatibility checks, and optional image tools.",
   "author": "Blacstar7",
   "license": "MIT",
