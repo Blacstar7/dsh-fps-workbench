@@ -1,5 +1,17 @@
 # Changelog · 更新日志
 
+## [0.1.78](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.78) — 2026-11-13
+
+### English
+
+- Releases from version tags use npm Trusted Publishing. The workflow waits for the exact npm version to become public and verifies the archive before attaching it to GitHub Releases.
+- If you are still using the old `@local/claude-code-workbench` package, follow the one-time switch described in v0.1.77 below.
+
+### 简体中文
+
+- 推送版本标签后，GitHub Actions 通过 npm 可信发布发包。流程会等 npm 公开对应版本并核对安装包，再将同一份包上传到 GitHub Releases。
+- 仍在使用旧包 `@local/claude-code-workbench` 的用户，可按下方 v0.1.77 的说明完成一次换装。
+
 ## [0.1.77](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.77)
 
 ### English
