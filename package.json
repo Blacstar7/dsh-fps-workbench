@@ -1,6 +1,6 @@
 {
-  "name": "@local/claude-code-workbench",
-  "version": "0.1.76",
+  "name": "dsh-fps-workbench",
+  "version": "0.1.77",
   "description": "Session outputs, tool summaries, attachment drafts, provider usage, and optional image tools for DeepSeek Harness.",
   "author": "Blacstar7",
   "license": "MIT",

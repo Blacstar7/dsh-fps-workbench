@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: '@local/claude-code-workbench',
+  id: 'dsh-fps-workbench',
   factory(require) {
     try {
     const React = require('react');
@@ -4362,7 +4362,7 @@ window.__ModuleLoader__.load({
               install('image generation settings', () => ctx.slots.inject(
                 'plugins.bundle.config',
                 guardInjection('image generation settings', () => ctx.slots.register({
-                  name: 'plugins.bundle.config', key: '@local/claude-code-workbench', locale: NS,
+                  name: 'plugins.bundle.config', key: 'dsh-fps-workbench', locale: NS,
                 }, withBoundary(ImageGenerationSettings))),
               )),
               install('new session greeting', () => ctx.slots.inject(

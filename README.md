@@ -60,13 +60,17 @@ See the plugin details for setup, credentials, platform requirements, and output
 
 Use DSH 0.2.2-rc.1 or later with the desktop or Web conversation interface. Features such as voice input and file previews require the corresponding DSH components in your profile.
 
-Download the `.tgz` bundle from the [latest GitHub release](https://github.com/Blacstar7/dsh-fps-workbench/releases/latest) and install it through Plugins → Add plugin using the local path option. You can also run the following command with the DSH CLI.
+In DSH, open **Plugins → Add plugin**, select the npm registry, and enter `dsh-fps-workbench`. You can also download the `.tgz` bundle from the [latest GitHub release](https://github.com/Blacstar7/dsh-fps-workbench/releases/latest) and select it using the local path option. The DSH CLI supports npm installation as well.
 
 ```sh
-dsh plugin --profile desktop add "/path/to/fps-workbench-0.1.76.tgz"
+dsh plugin --profile desktop add dsh-fps-workbench
 ```
 
-Replace `desktop` with `web` for the Web profile. After updating an existing installation, restart DSH to load the image generation tools.
+Replace `desktop` with `web` for the Web profile. Restart DSH if prompted.
+
+### Switching from v0.1.76 or earlier
+
+Save any unsent attachments first. In **Plugins → Installed**, remove the old Four-pointed star entry whose package name is `@local/claude-code-workbench`, then install `dsh-fps-workbench` in the same DSH profile and restart if prompted. The new package reads the existing image provider settings, stored credentials, and local usage settings. DSH conversations and workspaces remain in the profile. Text drafts carry over in the same browser or desktop profile. Unsent attachments are held in memory until the page reloads.
 
 ### Known issue
 
