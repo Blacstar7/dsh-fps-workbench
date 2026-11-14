@@ -1,5 +1,23 @@
 # Changelog · 更新日志
 
+## [0.1.81](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.81) — 2026-11-14
+
+### English
+
+- Use DSH's native agent teamwork control in the FPS model menu. The information button opens the native explanation above the menu. Teamwork still uses DSH's confirmation and shared task board.
+- Keep the selected reasoning effort when reselecting the current model. Show provider catalog errors with a retry action and support native model labels and menu options.
+- Restore the native plan mode exit, continuation after a recoverable failure, feedback dialog, and the shortcut to steer queued messages.
+- Accept file paste outside the editor and restore document-level file drop. On Desktop, dropped or pasted folders become path references. A failed file upload can be retried from its draft chip.
+- Verified on macOS with DSH 0.2.2-rc.3. Agent teamwork and subagent model selection follow the authorization recorded by DSH for each session.
+
+### 简体中文
+
+- FPS 模型菜单接回 DSH 原生智能体团队开关。信息按钮可在菜单上方打开原生说明，团队确认与共享任务板沿用 DSH 原生操作。
+- 重选当前模型时保留推理强度。模型菜单显示服务商目录加载失败及重试入口，并接回原生模型标签和菜单扩展。
+- 恢复原生计划模式退出、可恢复失败后的继续生成、反馈表单及引导排队消息的快捷键。
+- 支持在输入框外粘贴文件，恢复窗口内文件拖放。桌面端拖入或粘贴的文件夹会转为路径引用；单个文件上传失败时，可在该附件上重试。
+- 已在 macOS 的 DSH 0.2.2-rc.3 验证。团队协作与子智能体模型选择遵循 DSH 为各会话记录的授权。
+
 ## [0.1.80](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.80) — 2026-11-13
 
 ### English

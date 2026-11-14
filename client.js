@@ -10,6 +10,12 @@ window.__ModuleLoader__.load({
     const RIGHT_SIDEBAR_MIN_WIDTH = 300;
     const NATIVE_INPUT_ACTIVITY = 'conversation.input.activity';
     const WORKBENCH_VOICE_SLOT = 'workbench.composer.voice';
+    const NATIVE_MODEL_OPTIONS = 'conversation.input.model.options';
+    const WORKBENCH_MODEL_OPTIONS = 'workbench.composer.modelOptions';
+    const WORKBENCH_MODEL_LABEL = 'workbench.composer.modelLabel';
+    const WORKBENCH_PLAN = 'workbench.composer.plan';
+    const WORKBENCH_ATTACHMENTS = 'workbench.composer.attachments';
+    const WORKBENCH_OVERLAY = 'workbench.composer.overlay';
     const BRAND_VIEW_BOX = '8.5 8.5 47 47';
     const BRAND_RAY = 'M31.1 6Q32 4.3 32.9 6L39.1 18.1Q40.5 21 37.7 23L32 26.3 26.3 23Q23.5 21 24.9 18.1Z';
     const BRAND_RAYS = [135, 225, 315, 45].map((angle) => ({
@@ -111,6 +117,12 @@ window.__ModuleLoader__.load({
       attachment: 'Attachment',
       image: 'Image',
       inputPlaceholder: 'Write a message…',
+      planPlaceholder: 'Describe what you want to plan…',
+      continueGeneration: 'Continue generating',
+      steerQueueHint: 'Cmd/Ctrl+Enter steers all queued messages',
+      retry: 'Retry',
+      retryFile: 'Retry upload',
+      directoryPathUnavailable: 'DSH could not read this folder’s local path.',
       inputDisabled: 'Select a conversation to start writing',
       send: 'Send',
       queue: 'Queue message',
@@ -329,6 +341,12 @@ window.__ModuleLoader__.load({
       attachment: '附件',
       image: '图片',
       inputPlaceholder: '输入消息…',
+      planPlaceholder: '描述你想制定的计划…',
+      continueGeneration: '继续生成',
+      steerQueueHint: '按 Cmd/Ctrl+Enter 引导全部排队消息',
+      retry: '重试',
+      retryFile: '重试上传',
+      directoryPathUnavailable: 'DSH 无法读取此文件夹的本机路径。',
       inputDisabled: '选择一个会话后开始输入',
       send: '发送',
       queue: '排队发送',
@@ -1264,6 +1282,18 @@ window.__ModuleLoader__.load({
         color: var(--cw-text);
         box-shadow: 0 14px 40px var(--cw-shadow);
       }
+      /* DSH's body-level tooltips and dialogs must paint above this menu. */
+      .cw-model-menu.cw-model-picker { z-index: 1000; }
+      .cw-model-load-failure button, .cw-composer-file button.cw-file-retry {
+        margin-inline-start: 6px; color: inherit; cursor: pointer;
+        background: transparent; border: 1px solid var(--cw-border); border-radius: 5px;
+      }
+      .cw-composer-file button.cw-file-retry {
+        width: auto; padding-inline: 5px; color: var(--cw-danger);
+      }
+      .cw-composer-actions .cw-continue-button {
+        width: auto; padding-inline: 9px; white-space: nowrap;
+      }
       .cw-model-search {
         width: 100%; height: 30px; margin-bottom: 4px; padding: 0 8px;
         border: 1px solid var(--cw-border); border-radius: 7px;
@@ -1303,6 +1333,9 @@ window.__ModuleLoader__.load({
       .cw-model-efforts {
         margin-top: 4px; padding: 4px 8px 8px;
         border-top: 1px solid var(--cw-border);
+      }
+      .cw-model-native-options:not(:empty) {
+        margin-top: 4px; border-top: 1px solid var(--cw-border);
       }
       .cw-effort-options { display: flex; flex-wrap: wrap; gap: 5px; }
       .cw-effort-option {
@@ -2374,6 +2407,33 @@ window.__ModuleLoader__.load({
     const MAX_IMAGES = 4;
     const MAX_FILES = 6;
     const MAX_FILE_BYTES = 20 * 1024 * 1024;
+    // Receipts are session-bound and intentionally excluded from persisted drafts.
+    const fileStages = new WeakMap();
+    const fileStageListeners = new Set();
+    let fileStageRevision = 0;
+    function notifyFileStages() {
+      fileStageRevision += 1;
+      for (const listener of fileStageListeners) listener();
+    }
+    function subscribeFileStages(listener) {
+      fileStageListeners.add(listener);
+      return () => fileStageListeners.delete(listener);
+    }
+    const readFileStageRevision = () => fileStageRevision;
+
+    function draftFileStage(file, sessionId) {
+      const stage = fileStages.get(file);
+      return stage?.sessionId === sessionId ? stage : undefined;
+    }
+
+    function desktopDirectoryMention(file, cwd) {
+      const path = globalThis.__DSH_HOST_PATHS__?.pathFor(file);
+      if (!path) return undefined;
+      const root = cwd.replace(/[\\/]+$/u, '');
+      const relative = root && (path.startsWith(`${root}/`) || path.startsWith(`${root}\\`))
+        ? path.slice(root.length + 1) : path;
+      return referenceRows([{ path: relative.replace(/[\\/]+$/u, ''), kind: 'directory' }], [], false)[0]?.mention;
+    }
 
     function needsImageRecognition(result, images) {
       return images.length > 0 && !result?.ok
@@ -2658,11 +2718,12 @@ window.__ModuleLoader__.load({
       return reasoning?.efforts?.find((effort) => effort.id === effortId)?.name || effortId;
     }
 
-    function ModelControl({ props, sessionId, t, openRequest }) {
+    function ModelControl({ props, sessionId, t, openRequest, locked }) {
       const service = runtime.modelDirectories || runtime.ctx?.get('modelDirectories');
       let directory;
       try {
-        directory = service && sessionId ? service.directoryFor(sessionId) : undefined;
+        directory = service && sessionId && runtime.sessions?.subagentAddress?.(sessionId) === undefined
+          ? service.directoryFor(sessionId) : undefined;
       } catch {
         directory = undefined;
       }
@@ -2672,14 +2733,32 @@ window.__ModuleLoader__.load({
       const [query, setQuery] = React.useState('');
       const [selecting, setSelecting] = React.useState(false);
       const [error, setError] = React.useState('');
+      const [loadError, setLoadError] = React.useState('');
       const [menuPos, setMenuPos] = React.useState(null);
       const rootRef = React.useRef(null);
       const triggerRef = React.useRef(null);
       const menuRef = React.useRef(null);
+      const directoryRef = React.useRef(directory);
+      directoryRef.current = directory;
+
+      async function loadModels(retry = false) {
+        setLoadError('');
+        try {
+          if (retry && state?.failures?.length) service.catalog?.refresh?.();
+          const result = await directory.load();
+          if (directoryRef.current === directory && result?.error) setLoadError(result.error);
+        } catch (cause) {
+          if (directoryRef.current === directory) setLoadError(errorMessage(cause));
+        }
+      }
 
       React.useEffect(() => {
-        if (openRequest && directory) setOpen(true);
-      }, [openRequest, directory]);
+        if (!openRequest || !directory) return;
+        setView('root');
+        setQuery('');
+        setOpen(true);
+        void loadModels();
+      }, [openRequest]);
 
       React.useEffect(() => {
         if (!directory) {
@@ -2692,9 +2771,7 @@ window.__ModuleLoader__.load({
         };
         sync();
         const unsubscribe = directory.store.subscribe(sync);
-        directory.load().catch((cause) => {
-          if (active) setError(`${t('modelLoadFailed')} ${errorMessage(cause)}`);
-        });
+        void loadModels();
         return () => {
           active = false;
           unsubscribe?.();
@@ -2704,7 +2781,11 @@ window.__ModuleLoader__.load({
       React.useEffect(() => {
         if (!open) return undefined;
         const closeOutside = (event) => {
-          if (rootRef.current?.contains(event.target) || menuRef.current?.contains(event.target)) return;
+          const menu = menuRef.current;
+          if (rootRef.current?.contains(event.target) || menu?.contains(event.target)) return;
+          const tooltip = event.target.closest?.('[role="tooltip"][id]');
+          if (tooltip && [...(menu?.querySelectorAll('[aria-describedby]') || [])]
+            .some((node) => node.getAttribute('aria-describedby').split(/\s+/u).includes(tooltip.id))) return;
           setOpen(false);
         };
         document.addEventListener('mousedown', closeOutside);
@@ -2739,13 +2820,6 @@ window.__ModuleLoader__.load({
           window.removeEventListener('scroll', place, true);
         };
       }, [open]);
-
-      React.useEffect(() => {
-        setOpen(false);
-        setView('root');
-        setQuery('');
-        setError('');
-      }, [sessionId]);
 
       if (!directory) return null;
       const groups = Array.isArray(state?.groups) ? state.groups : [];
@@ -2784,42 +2858,51 @@ window.__ModuleLoader__.load({
       const hasMoreGroups = groups.some((group) =>
         group.id !== rootGroup?.id && Array.isArray(group.models) && group.models.length > 0);
 
-      async function choose(group, model) {
+      function dismiss() {
+        setOpen(false);
+        setQuery('');
+        triggerRef.current?.focus();
+      }
+
+      async function select(selection, failureLabel) {
+        if (locked || selecting || state?.pending) return;
         setSelecting(true);
         setError('');
         try {
-          const result = await directory.select({ provider: group.id, model: model.id });
+          const result = await directory.select(selection);
           if (!result.ok) {
             throw new Error(`${result.error.code}: ${result.error.message}`);
           }
-          setOpen(false);
-          setQuery('');
+          if (directoryRef.current === directory) dismiss();
         } catch (cause) {
-          setError(`${t('modelSelectFailed')} ${errorMessage(cause)}`);
+          if (directoryRef.current === directory) setError(`${t(failureLabel)} ${errorMessage(cause)}`);
         } finally {
-          setSelecting(false);
+          if (directoryRef.current === directory) setSelecting(false);
         }
       }
 
-      async function chooseEffort(effortId) {
+      function choose(group, model) {
+        if (current?.provider === group.id && current.model === model.id) return dismiss();
+        return select({ provider: group.id, model: model.id }, 'modelSelectFailed');
+      }
+
+      function chooseEffort(effortId) {
         if (!current) return;
-        setSelecting(true);
-        setError('');
-        try {
-          const result = await directory.select({
-            provider: current.provider,
-            model: current.model,
-            ...effortId === undefined ? {} : { reasoningEffort: effortId },
-          });
-          if (!result.ok) {
-            throw new Error(`${result.error.code}: ${result.error.message}`);
-          }
-          setOpen(false);
-        } catch (cause) {
-          setError(`${t('effortSelectFailed')} ${errorMessage(cause)}`);
-        } finally {
-          setSelecting(false);
-        }
+        if (currentEffortId === effortId) return dismiss();
+        return select({ provider: current.provider, model: current.model, reasoningEffort: effortId },
+          'effortSelectFailed');
+      }
+
+      function renderLabel(group, model, placement, selected) {
+        const badge = model.badge?.text;
+        const badgeText = typeof badge === 'string' ? badge
+          : badge && runtime.ctx?.get('locale')?.resolveText?.(badge);
+        const mark = badgeText ? h('span', { className: 'cw-model-effort' }, badgeText) : null;
+        return props.renderSlot(WORKBENCH_MODEL_LABEL, {
+          provider: group.provider || { id: group.id, name: group.name }, model, placement, selected,
+        }, { fallback: h(React.Fragment, null,
+          placement === 'trigger' ? mark : null, mark && placement === 'trigger' ? ' ' : null,
+          model.name, mark && placement === 'menu' ? ' ' : null, placement === 'menu' ? mark : null) });
       }
 
       function onMenuKeyDown(event) {
@@ -2842,27 +2925,36 @@ window.__ModuleLoader__.load({
         items[next]?.focus();
       }
 
+      function onTriggerKeyDown(event) {
+        if (event.key === 'Escape' && open) {
+          event.preventDefault();
+          dismiss();
+        }
+      }
+
       return h('div', { className: 'cw-model-wrap', ref: rootRef },
         h('button', {
           ref: triggerRef,
           type: 'button', className: 'cw-model-button',
           title: currentName, 'aria-label': t('selectModel'),
-          'aria-expanded': open, disabled: selecting || state?.status === 'selecting',
+          'aria-expanded': open, disabled: locked || selecting || state?.status === 'selecting',
+          onKeyDown: onTriggerKeyDown,
           onClick: () => {
             const next = !open;
             setOpen(next);
             if (next) setView('root');
             setQuery('');
             setError('');
-            if (next) directory.load().catch((cause) => setError(`${t('modelLoadFailed')} ${errorMessage(cause)}`));
+            if (next) void loadModels();
           },
         },
-          h('span', { className: 'cw-model-button-label' }, currentName),
+          h('span', { className: 'cw-model-button-label' }, currentModel
+            ? renderLabel(currentGroup, currentModel, 'trigger', true) : currentName),
           effort ? h('span', { className: 'cw-model-effort' }, effort) : null,
           h(Icon, { name: 'chevron' })),
         open ? ReactDOM.createPortal(
           h('div', {
-            ref: menuRef, className: 'cw-root cw-model-menu',
+            ref: menuRef, className: 'cw-root cw-model-menu cw-model-picker',
             style: menuPos || {
               visibility: 'hidden', left: 0, top: 0,
               width: Math.min(340, window.innerWidth - 32),
@@ -2880,6 +2972,13 @@ window.__ModuleLoader__.load({
             onChange: (event) => setQuery(event.target.value),
           }) : null,
           state?.status === 'loading' ? h('div', { className: 'cw-model-empty' }, t('modelLoading')) : null,
+          [...(loadError ? [{ id: 'catalog', name: t('modelLoadFailed'), message: loadError }] : []),
+            ...(state?.failures || [])].map(({ id, name, message }) =>
+            h('div', { key: id, className: 'cw-model-error cw-model-load-failure', role: 'status' },
+              `${name}: ${message}`,
+              h('button', { type: 'button', 'data-cw-menu-item': '',
+                disabled: state?.status === 'loading' || selecting,
+                onClick: () => void loadModels(true) }, t('retry')))),
           !state?.status || totalModels === 0
             ? h('div', { className: 'cw-model-empty' }, t('noModels')) : null,
           visibleGroups.map((group) => h('div', { key: group.id },
@@ -2894,7 +2993,7 @@ window.__ModuleLoader__.load({
                 disabled: selecting || state?.status === 'selecting',
                 onClick: () => void choose(group, model),
               },
-                h('span', { className: 'cw-model-option-label' }, model.name),
+                h('span', { className: 'cw-model-option-label' }, renderLabel(group, model, 'menu', checked)),
                 checked ? h('span', { className: 'cw-model-option-check' }, '✓') : null);
             }),
           )),
@@ -2909,6 +3008,13 @@ window.__ModuleLoader__.load({
                 onClick: () => void chooseEffort(level.id),
               }, level.label)),
             ),
+          ) : null,
+          !allView && sessionId ? h('div', { className: 'cw-model-native-options' },
+            props.renderSlot(WORKBENCH_MODEL_OPTIONS, {
+              locked: locked || selecting || state?.status === 'selecting',
+              dismiss,
+              reportFailure: setError,
+            }),
           ) : null,
           !allView && hasMoreGroups ? h('button', {
             type: 'button', className: 'cw-model-option cw-model-more',
@@ -3387,21 +3493,30 @@ window.__ModuleLoader__.load({
       try { if (typeof dispose === 'function') dispose(); }
       catch (error) { reportDiagnostic(`integration cleanup failed: ${error?.message || error}`); }
     }
-    function mirrorNativeEntry(slots, source, target, match, onError) {
-      let active = true, current, dispose, unsubscribe;
+    function mirrorNativeEntries(slots, source, target, { match, list = false, onError } = {}) {
+      let active = true, unsubscribe;
+      const mirrored = new Map();
       function sync() {
         if (!active) return;
         try {
-          const entry = slots.entriesOfSlot(source).find(match);
-          if (current === entry) return;
-          disposeSafely(dispose); dispose = undefined; current = undefined;
-          if (entry) {
-            dispose = slots.register({ name: target, locale: entry.locale, inject: entry.inject }, entry.component);
-            current = entry;
+          const entries = slots.entriesOfSlot(source);
+          const selected = (match ? entries.filter(match) : entries).slice(0, list ? undefined : 1);
+          for (const [entry, dispose] of mirrored) {
+            if (!selected.includes(entry)) {
+              mirrored.delete(entry);
+              disposeSafely(dispose);
+            }
+          }
+          for (const entry of selected) {
+            if (mirrored.has(entry)) continue;
+            mirrored.set(entry, slots.register({
+              name: target, locale: entry.locale, inject: entry.inject,
+              ...(list ? { id: entry.options.id, order: entry.options.order } : {}),
+              ...(entry.options?.store ? { store: entry.options.store } : {}),
+            }, entry.component));
           }
         } catch (error) {
           // Native registry notifications must never receive our exception.
-          disposeSafely(dispose); dispose = current = undefined;
           reportDiagnostic(`optional slot mirror unavailable: ${error?.message || error}`);
           onError?.();
         }
@@ -3409,8 +3524,9 @@ window.__ModuleLoader__.load({
       function cleanup() {
         if (!active) return;
         active = false;
-        disposeSafely(unsubscribe); disposeSafely(dispose);
-        unsubscribe = dispose = current = undefined;
+        disposeSafely(unsubscribe);
+        for (const dispose of mirrored.values()) disposeSafely(dispose);
+        mirrored.clear();
       }
       try {
         unsubscribe = slots.subscribe(source, sync);
@@ -3423,8 +3539,8 @@ window.__ModuleLoader__.load({
       return cleanup;
     }
     function bridgeNativeJobs(slots) {
-      return mirrorNativeEntry(slots, 'conversation.session.header.actions', 'workbench.context.jobs',
-        (entry) => entry.options?.id === 'job-list');
+      return mirrorNativeEntries(slots, 'conversation.session.header.actions', 'workbench.context.jobs',
+        { match: (entry) => entry.options?.id === 'job-list' });
     }
 
     function ContextPanelBase(props) {
@@ -3911,6 +4027,11 @@ window.__ModuleLoader__.load({
       const session = props.useSession((value) => value);
       const promptAllowed = props.useAccess('session/prompt') !== false;
       const cancelAllowed = props.useAccess('session/cancel') !== false;
+      const uploadAllowed = props.useAccess('fileUploads/upload') !== false;
+      const retryableFailure = props.useProjection('conversationContinuation');
+      const inbox = props.useProjection('inbox');
+      const plan = props.useProjection('plan');
+      const nativeInput = props.useInput?.((value) => value);
       const sessionId = props.sessionId;
       const [text, setText] = React.useState(() => readDraft(sessionId));
       const readAttachments = React.useCallback(() => attachmentDrafts.read(sessionId), [sessionId]);
@@ -3927,13 +4048,16 @@ window.__ModuleLoader__.load({
       const [commandActive, setCommandActive] = React.useState(0);
       const [commandDismissed, setCommandDismissed] = React.useState(null);
       const [commandLauncherOpen, setCommandLauncherOpen] = React.useState(false);
-      const [modelOpenRequest, setModelOpenRequest] = React.useState(0);
+      const [modelOpenRequest, setModelOpenRequest] = React.useState(null);
       const [caret, setCaret] = React.useState(0);
       const [mentionRows, setMentionRows] = React.useState([]);
       const [mentionStatus, setMentionStatus] = React.useState('idle');
       const [mentionActive, setMentionActive] = React.useState(0);
       const [mentionDismissed, setMentionDismissed] = React.useState(null);
+      React.useSyncExternalStore(subscribeFileStages, readFileStageRevision);
       const composerRef = React.useRef(null);
+      const cardRef = React.useRef(null);
+      const intakeRef = React.useRef(null);
       const fileInputRef = React.useRef(null);
       const uploadInputRef = React.useRef(null);
       const textareaRef = React.useRef(null);
@@ -3961,7 +4085,7 @@ window.__ModuleLoader__.load({
         setCommandActive(0);
         setCommandDismissed(null);
         setCommandLauncherOpen(false);
-        setModelOpenRequest(0);
+        setModelOpenRequest(null);
         setCaret(0);
         setMentionRows([]);
         setMentionStatus('idle');
@@ -3989,8 +4113,10 @@ window.__ModuleLoader__.load({
         return () => document.removeEventListener('mousedown', dismiss);
       }, [commandLauncherOpen]);
       const running = Boolean(session?.running);
-      const unavailable = Boolean(props.disabled || props.blocked || !sessionId || !promptAllowed);
+      const unavailable = Boolean(props.disabled || props.blocked || session?.removed || !sessionId || !promptAllowed);
       const draftLoading = draftStorageStatus === 'loading';
+      const canAcceptFiles = !unavailable && !draftLoading && !sending && uploadAllowed
+        && (!session?.subagent || session.subagent.address?.mode === 'continuable');
       const voiceLocked = unavailable || sending;
       const previousVoiceDraft = voiceDraft.current;
       voiceDraft.current = {
@@ -4031,7 +4157,20 @@ window.__ModuleLoader__.load({
         },
       }), []);
       const t = (key) => translate(props, key);
-      const canSend = Boolean(!unavailable && !draftLoading && !sending && (text.trim() || images.length || files.length));
+      const empty = !text.trim() && !images.length && !files.length;
+      const canSend = !unavailable && !draftLoading && !sending && !empty
+        && !files.some((file) => ['error', 'uploading'].includes(draftFileStage(file, sessionId)?.status));
+      const queueLength = nativeInput?.queue?.length ?? inbox?.['next-turn']?.length ?? 0;
+      const nativeInputIdle = !nativeInput || nativeInput.phase === 'plain';
+      const canRetryTurn = empty && !running && !session?.subagent && retryableFailure != null
+        && !inbox?.['next-step']?.some((message) => message?.source?.kind === 'user')
+        && session?.openState === 'open' && !session.pendingSubmissions?.length
+        && !unavailable && !draftLoading && !sending && !queueLength && nativeInputIdle
+        && typeof props.nativeRetry === 'function';
+      const canSteerQueue = empty && !unavailable && !sending && running && queueLength > 0
+        && (!session?.subagent || session.subagent.address?.mode === 'continuable')
+        && nativeInputIdle && typeof props.nativeKeyboard?.steerQueue === 'function';
+      const planActive = plan && (plan.pending ? !plan.active : plan.active);
       const slashQuery = images.length === 0 ? commandQuery(text) : null;
       const commandMenuVisible = commandLauncherOpen || (slashQuery !== null && commandDismissed !== text);
       const commandChoices = commandLauncherOpen && text.trim() && slashQuery === null
@@ -4044,6 +4183,22 @@ window.__ModuleLoader__.load({
       const sessionsState = typeof props.useSessions === 'function'
         ? props.useSessions((value) => value) : null;
       const cwd = sessionsState?.byId?.[sessionId]?.cwd || session?.cwd || '';
+      intakeRef.current = { canAcceptFiles, add: intakeAttachments,
+        canPick: canAcceptFiles && !session?.subagent };
+      React.useEffect(() => {
+        if (!cardRef.current || !props.registerFileIntake) return undefined;
+        return props.registerFileIntake({
+          card: cardRef.current, occurrence: props.occurrence,
+          accepts: () => intakeRef.current.canAcceptFiles,
+          add: (incoming, directories) => intakeRef.current.add(incoming, directories),
+        });
+      }, [props.registerFileIntake, props.occurrence, sessionId, props.onRequestWorkspace]);
+      React.useEffect(() => props.nativeKeyboard?.bindFilePicker?.({
+        available: () => intakeRef.current.canPick && !!uploadInputRef.current,
+        open: () => uploadInputRef.current?.click(),
+      }), [props.nativeKeyboard]);
+      const dropFiles = React.useCallback((incoming, directories) =>
+        intakeRef.current.add(incoming, directories), []);
       const mention = mentionQuery(text, caret);
       const mentionToken = mention && text.slice(mention.start, caret);
       const mentionMenuVisible = mention !== null
@@ -4097,6 +4252,8 @@ window.__ModuleLoader__.load({
           if (!result?.ok) throw new Error(errorMessage(result));
           commandFetchedFor.current = sessionId;
           const rows = commandRowsFromDescriptors(result.value);
+          const feedback = rows.find((row) => row.name === 'feedback');
+          if (feedback && runtime.ctx?.get('feedbackUi')?.openSession) feedback.hasInput = false;
           if (runtime.modelDirectories && !rows.some((row) => row.name === 'model')) {
             rows.push({ name: 'model', label: 'model', description: t('selectModel') });
           }
@@ -4114,7 +4271,7 @@ window.__ModuleLoader__.load({
       }, [commandMenuVisible, sessionId]);
 
       function addImageFiles(fileList) {
-        if (draftLoading) { setError(t('draft_loading')); return; }
+        if (!canAcceptFiles) return;
         const available = Math.max(0, MAX_IMAGES - readAttachments().images.length);
         const incoming = Array.from(fileList || []).filter((file) => file?.type?.startsWith('image/')).slice(0, available);
         if (incoming.length === 0) return;
@@ -4128,15 +4285,59 @@ window.__ModuleLoader__.load({
 
       function onPaste(event) {
         const items = Array.from(event.clipboardData?.items || []);
-        const pasted = items.filter((item) => item.kind === 'file').map((item) => item.getAsFile()).filter(Boolean);
-        if (pasted.length === 0) return;
+        const pasted = [];
+        const directories = new Set();
+        for (const item of items) {
+          if (item.kind !== 'file') continue;
+          const file = item.getAsFile();
+          if (!file) continue;
+          pasted.push(file);
+          if (item.webkitGetAsEntry?.()?.isDirectory) directories.add(file);
+        }
+        if (!canAcceptFiles || pasted.length === 0) return;
         event.preventDefault();
-        addImageFiles(pasted.filter((file) => file.type.startsWith('image/')));
-        addDraftFiles(pasted.filter((file) => !file.type.startsWith('image/')));
+        intakeAttachments(pasted, directories);
+      }
+
+      function intakeAttachments(incoming, directories = new Set()) {
+        if (!canAcceptFiles) return;
+        const directoryFiles = incoming.filter((file) => directories.has(file));
+        const regular = incoming.filter((file) => !directories.has(file));
+        const imageFiles = regular.filter((file) => file.type.startsWith('image/'));
+        const otherFiles = regular.filter((file) => !file.type.startsWith('image/'));
+        if (session?.subagent && (directoryFiles.length || otherFiles.length)) {
+          setError(t('imageReadFailed'));
+          return;
+        }
+        let mentions;
+        try {
+          mentions = directoryFiles.map((file) => desktopDirectoryMention(file, cwd));
+        } catch {
+          setError(t('directoryPathUnavailable'));
+          return;
+        }
+        if (mentions.includes(undefined)) { setError(t('directoryPathUnavailable')); return; }
+        if (imageFiles.length) addImageFiles(imageFiles);
+        if (otherFiles.length) addDraftFiles(otherFiles);
+        if (!mentions.length) return;
+        const editor = textareaRef.current;
+        const current = readDraft(sessionId);
+        const at = editor?.selectionStart ?? current.length;
+        const prefix = current.slice(0, at);
+        const insertion = `${prefix && !/\s$/u.test(prefix) ? ' ' : ''}${mentions.join(' ')} `;
+        const next = prefix + insertion + current.slice(editor?.selectionEnd ?? at);
+        writeDraft(sessionId, next);
+        setText(next);
+        setCaret(at + insertion.length);
+        requestAnimationFrame(() => {
+          if (sessionRef.current !== sessionId || textareaRef.current !== editor) return;
+          editor?.focus();
+          editor?.setSelectionRange(at + insertion.length, at + insertion.length);
+        });
       }
 
       function addDraftFiles(fileList) {
-        if (draftLoading) { setError(t('draft_loading')); return; }
+        if (!canAcceptFiles || session?.subagent) return;
         const incoming = Array.from(fileList || []).filter(Boolean);
         if (incoming.length === 0) return;
         if (readAttachments().files.length + incoming.length > MAX_FILES) {
@@ -4151,31 +4352,52 @@ window.__ModuleLoader__.load({
         attachmentDrafts.replace(sessionId, 'files', (current) => [...current, ...incoming]);
       }
 
-      async function stageDraftFiles(outgoing) {
-        const staged = [];
-        if (outgoing.length === 0) return staged;
-        const uploads = runtime.fileUploads;
-        if (!uploads?.upload) throw new Error(t('fileUploadFailed'));
+      async function stageDraftFile(file) {
+        const previous = draftFileStage(file, sessionId);
+        if (previous?.status === 'ready') return previous.receipt;
+        if (previous?.status === 'uploading') return previous.pending;
+        const stage = { sessionId, status: 'uploading' };
+        fileStages.set(file, stage);
+        stage.pending = (async () => {
+          const data = await readAsBase64(file);
+          const result = await runtime.fileUploads?.upload(sessionId, { data, name: file.name });
+          if (!result?.ok) throw new Error(result ? errorMessage(result) : t('fileUploadFailed'));
+          return {
+            receiptId: result.value.receiptId,
+            name: result.value.file?.name || file.name,
+            bytes: result.value.file?.bytes ?? file.size,
+          };
+        })();
+        notifyFileStages();
         try {
-          for (const file of outgoing) {
-            const data = await readAsBase64(file);
-            const result = await uploads.upload(sessionId, { data, name: file.name });
-            if (!result?.ok) throw new Error(errorMessage(result));
-            staged.push({
-              receiptId: result.value.receiptId,
-              name: result.value.file?.name || file.name,
-              bytes: result.value.file?.bytes ?? file.size,
-            });
-          }
+          stage.receipt = await stage.pending;
+          stage.status = 'ready';
+          return stage.receipt;
         } catch (cause) {
+          stage.status = 'error';
+          stage.error = errorMessage(cause);
           throw new Error(`${t('fileUploadFailed')} ${errorMessage(cause)}`, { cause });
+        } finally {
+          stage.pending = undefined;
+          notifyFileStages();
         }
-        return staged;
+      }
+
+      async function retryDraftFile(file) {
+        if (!canAcceptFiles || draftFileStage(file, sessionId)?.status !== 'error') return;
+        setError('');
+        try {
+          await stageDraftFile(file);
+        } catch (cause) {
+          if (sessionRef.current === sessionId) setError(errorMessage(cause));
+        }
       }
 
       async function runCommandLine(line, preserveDraft = false) {
         if (line === '/model' && runtime.modelDirectories) {
-          setModelOpenRequest((current) => current + 1);
+          setModelOpenRequest({ sessionId });
+        } else if (line === '/feedback' && runtime.ctx?.get('feedbackUi')?.openSession) {
+          runtime.ctx.get('feedbackUi').openSession(sessionId);
         } else {
           const commands = runtime.commandsRemote;
           if (typeof commands?.execute !== 'function') throw new Error(t('commandsUnavailable'));
@@ -4264,7 +4486,8 @@ window.__ModuleLoader__.load({
           reference = runtime.sessions.retain(sessionId, { source: 'workbenchPrompt' });
           await reference.ready;
           const outgoingImages = await Promise.all(draftImages.map((file) => imageFromFile(file, t)));
-          const outgoingFiles = await stageDraftFiles(draftFiles);
+          const outgoingFiles = [];
+          for (const file of draftFiles) outgoingFiles.push(await stageDraftFile(file));
           const send = (message, attachedImages, attachedFiles, signal) => {
             const content = [
               ...(message.trim() ? [{ type: 'text', text: message }] : []),
@@ -4323,6 +4546,10 @@ window.__ModuleLoader__.load({
             }
           }
           if (!result?.ok) {
+            if (result?.error?.code === 'session/attachment-invalid') {
+              for (const file of draftFiles) fileStages.delete(file);
+              notifyFileStages();
+            }
             throw new Error(errorMessage(result));
           }
         } catch (cause) {
@@ -4394,8 +4621,15 @@ window.__ModuleLoader__.load({
         }
         if (event.key !== 'Enter' || event.shiftKey) return;
         event.preventDefault();
+        if (canSteerQueue && (event.metaKey || event.ctrlKey)) {
+          props.nativeKeyboard.steerQueue();
+          return;
+        }
         void submit(event.metaKey || event.ctrlKey);
       }
+
+      const placeholder = unavailable ? t('inputDisabled') : props.placeholder
+        || (canSteerQueue ? t('steerQueueHint') : t(planActive ? 'planPlaceholder' : 'inputPlaceholder'));
 
       if (!sessionId && props.onRequestWorkspace) {
         return h('div', { className: 'cw-root cw-composer' },
@@ -4448,7 +4682,15 @@ window.__ModuleLoader__.load({
             h('span', { className: 'cw-command-name' }, entry.label),
           )),
         ) : null,
-        h('div', { className: 'cw-composer-card' },
+        h('div', { className: 'cw-composer-card', ref: cardRef, 'data-composer-card': '' },
+          sessionId ? h('div', { 'data-composer-overlay': '' },
+            props.renderSlot(WORKBENCH_OVERLAY, {})) : null,
+          props.renderSlot(WORKBENCH_ATTACHMENTS, {
+            attachments: [], uploads: {},
+            canAcceptDrop: canAcceptFiles,
+            onAddFiles: dropFiles,
+            dropLimits: { count: MAX_IMAGES, size: formatBytes(MAX_IMAGE_BYTES) },
+          }),
           h('input', {
             ref: fileInputRef, type: 'file', accept: 'image/*', multiple: true,
             style: { display: 'none' },
@@ -4466,19 +4708,27 @@ window.__ModuleLoader__.load({
             },
           }),
           files.length > 0 ? h('div', { className: 'cw-composer-files' },
-            files.map((file, index) => h('div', {
+            files.map((file, index) => {
+              const stage = draftFileStage(file, sessionId);
+              return h('div', {
               className: 'cw-composer-file', key: `${file.name}-${index}`,
             },
               h(Icon, { name: 'file' }),
               h('span', { className: 'cw-composer-file-name', title: file.name }, file.name),
               h('span', { className: 'cw-composer-file-size' }, formatBytes(file.size)),
+              stage?.status === 'uploading' ? h('span', { role: 'status' }, t('sending')) : null,
+              stage?.status === 'error' ? h('button', {
+                type: 'button', className: 'cw-file-retry', title: stage.error,
+                'aria-label': `${t('retryFile')}: ${file.name}`, disabled: !canAcceptFiles,
+                onClick: () => void retryDraftFile(file),
+              }, t('retryFile')) : null,
               h('button', {
                 type: 'button', title: t('removeFile'), 'aria-label': `${t('removeFile')}: ${file.name}`,
                 disabled: sending,
                 onClick: () => attachmentDrafts.replace(sessionId, 'files', (current) =>
                   current.filter((_, itemIndex) => itemIndex !== index)),
-              }, h(Icon, { name: 'close' })),
-            )),
+              }, h(Icon, { name: 'close' })));
+            }),
           ) : null,
           images.length > 0 ? h('div', { className: 'cw-composer-images' },
             images.map((image, index) => h('div', { className: 'cw-composer-image', key: `${image.name}-${index}` },
@@ -4496,10 +4746,10 @@ window.__ModuleLoader__.load({
               disabled: unavailable || draftLoading || sending,
               t,
               onImages: () => {
-                if (images.length < MAX_IMAGES) fileInputRef.current?.click();
+                if (canAcceptFiles && images.length < MAX_IMAGES) fileInputRef.current?.click();
               },
               onFiles: () => {
-                if (files.length < MAX_FILES) uploadInputRef.current?.click();
+                if (canAcceptFiles && !session?.subagent && files.length < MAX_FILES) uploadInputRef.current?.click();
               },
               onCommands: () => {
                 setCommandLauncherOpen(true);
@@ -4522,6 +4772,7 @@ window.__ModuleLoader__.load({
                 }
               },
             }),
+            sessionId ? props.renderSlot(WORKBENCH_PLAN, { locked: unavailable || sending }) : null,
             h('textarea', {
               ref: textareaRef,
               className: 'cw-composer-input', rows: 1, value: text,
@@ -4535,7 +4786,7 @@ window.__ModuleLoader__.load({
               },
               onSelect: (event) => setCaret(event.currentTarget.selectionStart ?? 0),
               onKeyDown, onPaste,
-              placeholder: unavailable ? t('inputDisabled') : (props.placeholder || t('inputPlaceholder')),
+              placeholder,
               'aria-label': t('inputPlaceholder'),
               disabled: unavailable || sending,
             }),
@@ -4553,7 +4804,10 @@ window.__ModuleLoader__.load({
                 type: 'button', className: 'cw-send-button cw-stop-button', onClick: () => void stop(),
                 title: t('stop'), 'aria-label': t('stop'),
               }, h(Icon, { name: 'stop' })) : null,
-              h('button', {
+              canRetryTurn ? h('button', {
+                type: 'button', className: 'cw-send-button cw-continue-button',
+                onClick: () => props.nativeRetry(retryableFailure),
+              }, t('continueGeneration')) : h('button', {
                 type: 'button', className: 'cw-send-button', disabled: !canSend,
                 onClick: () => void submit(),
                 title: running ? `${t(submitMode(session, preference, false))}\n${t('busySendHint')}` : t('send'),
@@ -4576,7 +4830,9 @@ window.__ModuleLoader__.load({
           h('div', { className: 'cw-footer-controls' },
             h(FolderControl, { cwd, disabled: unavailable || sending, t, onError: (message) => setError(message) }),
             h(PermissionControl, { props, sessionId, t }),
-            h(ModelControl, { props, sessionId, t, openRequest: modelOpenRequest }),
+            h(ModelControl, { key: sessionId, props, sessionId, t, openRequest: modelOpenRequest?.sessionId === sessionId
+              && modelOpenRequest,
+              locked: Boolean(props.disabled || session?.removed || sending) }),
             sessionId ? h(UsageControl, { key: sessionId, useProjection: props.useProjection, t }) : null,
           ),
         ),
@@ -4597,13 +4853,15 @@ window.__ModuleLoader__.load({
     const HeaderContextButton = withBoundary(ContextButton);
 
     function registerComposer(slots) {
-      let active = true, fallbackPending = false, disposeComposer, disposeVoice;
+      let active = true, fallbackPending = false, disposeComposer;
+      const mirrors = [];
       function cleanup() {
         if (!active) return;
         active = false;
         // Child mirrors/subscriptions go first, before their parent slot vanishes.
-        disposeSafely(disposeVoice); disposeSafely(disposeComposer);
-        disposeVoice = disposeComposer = undefined;
+        for (const dispose of mirrors.splice(0).reverse()) disposeSafely(dispose);
+        disposeSafely(disposeComposer);
+        disposeComposer = undefined;
       }
       function fallback() {
         if (!active || fallbackPending) return;
@@ -4619,12 +4877,33 @@ window.__ModuleLoader__.load({
         runtime.composerFallback = true; compatibilityChanged(); return cleanup;
       }
       try {
+        const name = 'conversation.composer.bar';
         disposeComposer = slots.register({
-          name: 'conversation.composer.bar', priority: -1,
-          children: { [WORKBENCH_VOICE_SLOT]: { kind: 'single', scope: 'session' } },
+          name, priority: -1,
+          inject: (sessionId) => {
+            const native = slots.entries?.(name)?.find((entry) => entry.locale === 'conversation');
+            const face = native?.inject?.(sessionId);
+            return { nativeRetry: face?.retry, registerFileIntake: face?.registerFileIntake,
+              nativeKeyboard: face?.keyboard };
+          },
+          children: {
+            [WORKBENCH_VOICE_SLOT]: { kind: 'single', scope: 'session' },
+            [WORKBENCH_MODEL_OPTIONS]: { kind: 'list', scope: 'session' },
+            [WORKBENCH_MODEL_LABEL]: { kind: 'single', scope: 'session', inline: true },
+            [WORKBENCH_PLAN]: { kind: 'single', scope: 'session' },
+            [WORKBENCH_ATTACHMENTS]: { kind: 'single', scope: 'session-maybe' },
+            [WORKBENCH_OVERLAY]: { kind: 'list', scope: 'session' },
+          },
         }, (props) => Composer(props, fallback));
-        disposeVoice = mirrorNativeEntry(slots, NATIVE_INPUT_ACTIVITY, WORKBENCH_VOICE_SLOT,
-          (entry) => entry.locale === 'voice-input', fallback);
+        mirrors.push(mirrorNativeEntries(slots, NATIVE_INPUT_ACTIVITY, WORKBENCH_VOICE_SLOT,
+          { match: (entry) => entry.locale === 'voice-input', onError: fallback }));
+        mirrors.push(mirrorNativeEntries(slots, NATIVE_MODEL_OPTIONS, WORKBENCH_MODEL_OPTIONS, { list: true }));
+        mirrors.push(mirrorNativeEntries(slots, 'conversation.input.model.label', WORKBENCH_MODEL_LABEL));
+        mirrors.push(mirrorNativeEntries(slots, 'conversation.input.plan', WORKBENCH_PLAN));
+        mirrors.push(mirrorNativeEntries(slots, 'conversation.input.attachments', WORKBENCH_ATTACHMENTS));
+        // FPS owns slash and reference editing; DSH still renders its session overlays.
+        mirrors.push(mirrorNativeEntries(slots, 'conversation.input.overlay', WORKBENCH_OVERLAY,
+          { list: true, match: (entry) => entry.options?.id !== 'slash-menu' }));
         if (fallbackPending) {
           runtime.composerFallback = true; cleanup();
         } else runtime.composerFallback = false;
