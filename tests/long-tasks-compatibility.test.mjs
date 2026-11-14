@@ -73,8 +73,9 @@ function nativeSlots() {
     register(options, component) {
       if (failRegister) throw new Error('child slot unavailable');
       const entry = { options, component };
-      mirrors.set(options.name, entry);
-      return () => { if (mirrors.get(options.name) === entry) mirrors.delete(options.name); };
+      const key = options.id ? `${options.name}:${options.id}` : options.name;
+      mirrors.set(key, entry);
+      return () => { if (mirrors.get(key) === entry) mirrors.delete(key); };
     },
     subscribe(name, callback) {
       if (!listeners.has(name)) listeners.set(name, new Set());
@@ -90,6 +91,9 @@ function nativeSlots() {
 const voiceSource = 'conversation.input.activity';
 const voiceTarget = 'workbench.composer.voice';
 const composerTarget = 'conversation.composer.bar';
+const modelOptionsSource = 'conversation.input.model.options';
+const modelOptionsTarget = 'workbench.composer.modelOptions';
+const teamTarget = `${modelOptionsTarget}:agent-team`;
 const jobSource = 'conversation.session.header.actions';
 const jobTarget = 'workbench.context.jobs';
 const tick = () => new Promise((resolve) => setImmediate(resolve));
@@ -123,6 +127,53 @@ test('native input fallback also releases the voice mirror and ignores late noti
   staleCallback(); cleanup();
   assert.equal(slots.mirrors.size, 0);
   assert.equal(slots.sources.get(voiceSource).includes(slots.voice), true);
+});
+
+test('FPS mirrors native model options independently and preserves their order and inject faces', async () => {
+  const { testHooks: { registerComposer } } = await loadClientPlugin();
+  const slots = nativeSlots();
+  const team = { options: { id: 'agent-team' }, locale: 'agent-team', component: () => {}, inject: () => ({ native: true }) };
+  const cleanup = registerComposer(slots);
+  assert.equal(slots.mirrors.has(teamTarget), false);
+  const other = { ...team, options: { id: 'other', order: 3 } };
+  slots.sources.set(modelOptionsSource, [other, team]);
+  slots.emit(modelOptionsSource);
+  assert.equal(slots.mirrors.get(teamTarget).component, team.component);
+  assert.equal(slots.mirrors.get(teamTarget).options.inject, team.inject);
+  const otherKey = `${modelOptionsTarget}:other`;
+  const otherMirror = slots.mirrors.get(otherKey);
+  assert.equal(otherMirror.options.order, 3);
+  slots.sources.set(modelOptionsSource, [other]);
+  slots.emit(modelOptionsSource);
+  assert.equal(slots.mirrors.has(teamTarget), false);
+  assert.equal(slots.mirrors.get(otherKey), otherMirror);
+  assert.equal(slots.mirrors.has(composerTarget), true);
+  slots.sources.set(modelOptionsSource, [team]);
+  slots.emit(modelOptionsSource);
+  cleanup();
+  assert.equal(slots.listeners.get(modelOptionsSource).size, 0);
+  assert.equal(slots.mirrors.has(teamTarget), false);
+  assert.equal(slots.sources.get(modelOptionsSource)[0], team);
+});
+
+test('the FPS composer borrows native retry, intake and keyboard by session', async () => {
+  const { testHooks: { registerComposer } } = await loadClientPlugin();
+  const slots = nativeSlots();
+  const retry = () => {};
+  const registerFileIntake = () => {};
+  const keyboard = {};
+  slots.entries = () => [{
+    locale: 'conversation',
+    inject(sessionId) {
+      assert.equal(sessionId, 'test');
+      return { retry, registerFileIntake, keyboard, stop: () => {} };
+    },
+  }];
+  const cleanup = registerComposer(slots);
+  assert.deepEqual(slots.mirrors.get(composerTarget).options.inject('test'), {
+    nativeRetry: retry, registerFileIntake, nativeKeyboard: keyboard,
+  });
+  cleanup();
 });
 
 test('a queued fallback from an unloaded generation cannot unregister its replacement', async () => {
