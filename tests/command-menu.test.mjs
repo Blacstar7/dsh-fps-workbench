@@ -234,11 +234,11 @@ test('host command execution distinguishes success, unmatched lines, and handler
 
   assert.deepEqual(
     await executeHostCommand(call('/compact', { result: { kind: 'success' } }), 'session-1', '/compact'),
-    { ok: true },
+    { ok: true, matched: true },
   );
   assert.deepEqual(
-    await executeHostCommand(call('/missing', undefined), 'session-1', '/missing'),
-    { ok: false, error: 'unmatched' },
+    await executeHostCommand(call('/tmp/report.md inspect it', undefined), 'session-1', '/tmp/report.md inspect it'),
+    { ok: true, matched: false },
   );
   assert.deepEqual(
     await executeHostCommand(call('/plan nope', { result: { kind: 'error', text: 'bad args' } }), 'session-1', '/plan nope'),

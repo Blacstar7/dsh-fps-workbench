@@ -12,6 +12,15 @@ export const inject = ['connection', 'llm', 'attachments', 'sessionProjections']
 
 export async function apply(ctx) {
   ctx.connection.fetch.register({
+    path: '/api/workbench/visionModels',
+    methods: ['GET'],
+    requestBody: 'buffered',
+    fetch: async (request) => {
+      const catalog = await imageModels(ctx.llm, request.signal);
+      return Response.json(catalog, { headers: NO_STORE });
+    },
+  });
+  ctx.connection.fetch.register({
     path: '/api/workbench/describeImages',
     methods: ['POST'],
     requestBody: 'buffered',
@@ -27,6 +36,27 @@ export async function apply(ctx) {
   await registerImageGeneration(ctx);
 }
 
+async function imageModels(llm, signal, providerId) {
+  const providers = llm.listProviders().filter(({ id }) => providerId === undefined || id === providerId);
+  const catalogs = await Promise.allSettled(providers.map(async (provider) =>
+    (await llm.listModels(provider.id))
+      .filter(({ inputModalities }) => inputModalities?.includes('image'))
+      .map((model) => ({
+        provider: provider.id, model: model.id,
+        providerName: provider.name || provider.displayName || provider.id, name: model.name || model.id,
+      }))));
+  signal.throwIfAborted();
+  return {
+    models: catalogs.flatMap((result) => result.status === 'fulfilled' ? result.value : []),
+    incomplete: catalogs.some((result) => result.status === 'rejected'),
+  };
+}
+
+function isVisionRoute(route) {
+  return route && [route.provider, route.model].every((value) =>
+    typeof value === 'string' && value.length > 0 && value.length <= 512);
+}
+
 async function describeImages(ctx, request) {
   if (request.headers.get('content-type') !== 'application/json') {
     return Response.json({ error: 'Expected a JSON request.' }, { status: 415, headers: NO_STORE });
@@ -37,7 +67,8 @@ async function describeImages(ctx, request) {
   if (!Array.isArray(images) || images.length < 1 || images.length > 4
       || images.some((image) => !image || typeof image.mediaType !== 'string'
         || typeof image.data !== 'string' || image.data.length > MAX_ENCODED_IMAGE)
-      || typeof input.question !== 'string') {
+      || typeof input.question !== 'string'
+      || (input.route != null && !isVisionRoute(input.route))) {
     return Response.json({ error: 'Invalid image request.' }, { status: 400, headers: NO_STORE });
   }
 
@@ -57,21 +88,22 @@ async function describeImages(ctx, request) {
       }, ...parts],
     }];
 
-    const description = await recognize(ctx.llm, messages, signal);
+    const description = await recognize(ctx.llm, messages, signal, input.route);
     return Response.json({ description }, { headers: NO_STORE });
   } catch (error) {
+    if (input.route) {
+      return Response.json({ code: 'VISION_ROUTE_FAILED' }, { status: 502, headers: NO_STORE });
+    }
     const message = error instanceof Error ? error.message : 'Image recognition failed.';
     return Response.json({ error: message }, { status: 502, headers: NO_STORE });
   }
 }
 
-async function recognize(llm, messages, signal) {
-  const catalogs = await Promise.allSettled(llm.listProviders().map(({ id }) => llm.listModels(id)));
-  signal.throwIfAborted();
-  const models = catalogs.flatMap((result) => result.status === 'fulfilled'
-    ? result.value.filter(({ inputModalities }) => inputModalities?.includes('image')) : []);
+async function recognize(llm, messages, signal, route) {
+  const { models } = await imageModels(llm, signal, route?.provider);
+  const candidates = route ? models.filter(({ model }) => model === route.model) : models;
   let unavailable;
-  for (const { provider, id: model } of models) {
+  for (const { provider, model } of candidates) {
     signal.throwIfAborted();
     let text = '';
     let finish;

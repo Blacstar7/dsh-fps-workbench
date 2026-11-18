@@ -119,10 +119,62 @@ test('a transient storage read failure can recover the original saved attachment
   storage.load = async () => { throw new Error('unavailable'); };
   const drafts = createAttachmentDrafts(storage);
   await drafts.ready;
-  assert.equal(drafts.status(), 'error');
+  assert.equal(drafts.status(), 'read_error');
   storage.load = load;
   await drafts.retry();
   assert.equal(drafts.read('a').files[0].name, 'old.md');
+});
+
+test('a text-only submission never consumes attachments restored after a read failure', async () => {
+  const { testHooks: { createAttachmentDrafts } } = await loadClientPlugin();
+  const storage = memoryStorage();
+  const note = new File(['retain me'], 'note.md');
+  storage.rows.set('a', { images: [], files: [note] });
+  const load = storage.load;
+  storage.load = async () => { throw new Error('unavailable'); };
+  const drafts = createAttachmentDrafts(storage);
+  await drafts.ready;
+  drafts.replace('a', 'files', () => assert.fail('an unreadable draft cannot be replaced'));
+  const sent = drafts.begin('a');
+  drafts.finish('a', sent, true);
+  await drafts.flush();
+  assert.equal(storage.rows.get('a').files[0], note);
+
+  const sending = drafts.begin('a');
+  storage.load = load;
+  await drafts.retry();
+  assert.equal(drafts.read('a').submission, sending);
+  drafts.finish('a', sending, true);
+  await drafts.flush();
+  assert.deepEqual(drafts.read('a').files, [note]);
+  assert.deepEqual(storage.rows.get('a').files, [note]);
+});
+
+test('one damaged IndexedDB row does not block other drafts or overwrite the damaged row', async () => {
+  const { testHooks: { createAttachmentStorage, createAttachmentDrafts } } = await loadClientPlugin();
+  const rows = [
+    { id: 'bad', updatedAt: Date.now(), images: [], files: [{ name: 'bad.md', blob: null }] },
+    { id: 'good', updatedAt: Date.now(), images: [], files: [{ name: 'good.md', blob: new Blob(['saved']) }] },
+  ];
+  const indexedDB = { open() {
+    const request = { result: { transaction(_store, mode) {
+      assert.equal(mode, 'readonly');
+      const query = { result: rows };
+      const tx = { objectStore: () => ({ getAll: () => query }) };
+      queueMicrotask(() => { query.onsuccess(); tx.oncomplete(); });
+      return tx;
+    } } };
+    queueMicrotask(() => request.onsuccess());
+    return request;
+  } };
+  const drafts = createAttachmentDrafts(createAttachmentStorage(indexedDB));
+  await drafts.ready;
+  assert.equal(drafts.status('bad'), 'read_error');
+  assert.equal(drafts.status('good'), 'saved');
+  assert.equal(await drafts.read('good').files[0].text(), 'saved');
+  drafts.replace('bad', 'files', () => assert.fail('editing an unreadable draft is blocked'));
+  drafts.finish('bad', drafts.begin('bad'), true);
+  await drafts.flush();
 });
 
 test('a stalled IndexedDB open releases the draft loading lock and closes a late connection', async () => {
@@ -131,7 +183,7 @@ test('a stalled IndexedDB open releases the draft loading lock and closes a late
   const storage = createAttachmentStorage({ open() { const request = {}; requests.push(request); return request; } }, 10);
   const drafts = createAttachmentDrafts(storage);
   await drafts.ready;
-  assert.equal(drafts.status(), 'error');
+  assert.equal(drafts.status(), 'read_error');
   assert.ok(drafts.begin('text-session'), 'plain text submission can proceed after storage failure');
   let closed = false;
   requests[0].result = { close() { closed = true; } };

@@ -51,6 +51,10 @@ Consecutive tool operations are summarized as files read, commands run, and file
 
 **Outputs** collects local files produced or explicitly linked in the current session. Open an image, report, or source file directly in DSH's native preview instead of hunting through the conversation. Files, Terminal, Browser, and native conversation views remain available from the header.
 
+Open **⋯** beside a file to see its details or confirm the current version after previewing it. Confirmations are stored for that session on this client and support files up to 8 MiB. A content change flags the file for review. Identical content keeps its confirmation. Use **Refresh outputs** to check files edited outside the conversation.
+
+Output details show the recorded turn, step, and model route when associated with a write, or label a delivery or reply reference. With DSH's native Trajectory view available, the write action opens the corresponding tool call.
+
 ![A session output opened in DSH's native preview, in dark mode](https://raw.githubusercontent.com/Blacstar7/dsh-fps-workbench/v0.1.79/docs/screenshots/en/03-preview.jpg)
 
 Context categories are **estimates**, not a provider billing statement. The panel shows messages, tools, system prompt, and available space, alongside session information.
@@ -83,7 +87,9 @@ Provider sections are separated and sorted alphabetically, ignoring case. Indepe
 
 ### Image understanding for a text-only session
 
-If the selected model cannot accept images, FPS looks for an image-capable model in the user's DSH configuration. It obtains an image description and passes that description to the selected session. There is no hard-coded fallback model. This can make an additional model request and incur that provider's charges. If no suitable model is available, the draft is retained with an error.
+Select a fallback model or keep automatic selection in **Plugins → Four-pointed star → Image recognition**. If the conversation model cannot accept images, FPS uses the fallback to read the original images and your question, then passes the description to the conversation model. The fallback is shown beside the image draft. The request may incur the selected provider's charges.
+
+If the selected fallback fails, FPS keeps the text and image draft so you can select another model. A conversation model that supports images receives them directly.
 
 ### Optional cloud and local image generation
 

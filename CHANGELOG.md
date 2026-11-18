@@ -1,5 +1,25 @@
 # Changelog · 更新日志
 
+## [0.1.82](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.82) — 2026-11-18
+
+### English
+
+- Confirm a version of an output up to 8 MiB and see when its contents change, including same-size replacements.
+- See the turn, step, and model route recorded for an output write. Open the matching tool call when DSH's native Trajectory view is enabled.
+- Select an image-recognition fallback by model and provider. If that route fails, the draft stays available for another attempt.
+- Protect saved attachments after a restore failure and let users retry without losing the draft.
+- Send unmatched leading-slash text, including absolute paths, as a regular message.
+- Refresh the output list and image thumbnails after a file is rewritten at the same path.
+
+### 简体中文
+
+- 产物栏可确认 8 MiB 以内的文件版本。文件即使同名同大小，内容变化也会提醒复核。
+- 产物详情显示记录中的写入回合、步骤和模型路由。启用原生执行轨迹时可跳到对应工具调用。
+- 可指定辅助识图服务商和模型。指定路由失败后保留草稿。
+- 附件恢复失败时保留草稿，支持重试恢复。
+- 未匹配命令的斜杠开头文字可作为普通消息发送，包括以绝对路径开头的内容。
+- 同路径产物覆盖后刷新产物列表和图片缩略图。
+
 ## [0.1.81](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.81) — 2026-11-14
 
 ### English

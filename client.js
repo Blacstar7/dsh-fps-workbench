@@ -66,6 +66,7 @@ window.__ModuleLoader__.load({
       draft_saving: "Saving attachments on this device…",
       draft_saved: "Attachments saved on this device · kept for 30 days",
       draft_error: "Attachments could not be saved or restored. Keep this window open and retry.",
+      draft_read_error: 'Saved attachments could not be restored. You can send text and retry before adding files.',
       draft_memory: "Attachments are available in this window only.",
       tasksTitle: "Task status",
       tasksPlan: "Plan",
@@ -290,6 +291,7 @@ window.__ModuleLoader__.load({
       draft_saving: "正在将附件保存到本机…",
       draft_saved: "附件已保存到本机 · 保留 30 天",
       draft_error: "附件保存或恢复失败，请保留当前窗口并重试。",
+      draft_read_error: '已保存的附件暂时无法恢复。可以发送文字，请重试恢复后再添加附件。',
       draft_memory: "附件仅保留在当前窗口。",
       tasksTitle: "任务状态",
       tasksPlan: "计划步骤",
@@ -511,6 +513,26 @@ window.__ModuleLoader__.load({
     };
 
     Object.assign(en, {
+      visionTitle: 'Image recognition', visionModel: 'Fallback vision model',
+      visionIntro: 'When the conversation model cannot read images, FPS sends the images and your question to this model.',
+      visionAuto: 'Automatic', visionLoading: 'Loading vision models…',
+      visionCatalogError: 'Some vision models could not be loaded.',
+      visionNoModels: 'No vision-capable models are available in the DSH model catalog.',
+      visionUnavailable: 'Unavailable', visionSaveFailed: 'Could not save the vision model choice.',
+      visionRouteFailed: 'The selected vision model could not read the images. Choose another model under Four-pointed star → Image recognition and retry.',
+      visionFallback: 'If the conversation model cannot read images',
+      reviewActions: 'Output details', reviewRefresh: 'Refresh outputs',
+      reviewConfirm: 'Confirm current version', reviewConfirmAgain: 'Confirm new version',
+      reviewForget: 'Remove confirmation', review_confirmed: 'Confirmed',
+      review_changed: 'Content changed', review_checking: 'Checking version…',
+      review_missing: 'File missing', review_unavailable: 'Could not verify file',
+      review_tooLarge: 'Over the 8 MB review limit',
+      review_stale: 'File changed during review. Open the latest version and try again.',
+      reviewStorageFailed: 'Could not save output confirmations on this device.',
+      reviewLastConfirmed: 'Last confirmed', outputWrite: 'Successful write',
+      outputDelivery: 'Delivered', outputReference: 'Referenced',
+      outputTurn: 'Turn', outputStep: 'Step', outputInspect: 'View write record',
+      outputRecordedModel: 'Recorded model route', outputModelUnknown: 'Model route unavailable',
       imageSettings: 'Image generation',
       imageSettingsIntro: 'Optional text-to-image tools for this DSH installation. Cloud providers receive the image prompt. Turn on the ones you want to use.',
       imageSettingsLoad: 'Loading image providers…', imageSettingsError: 'Could not update image settings.',
@@ -531,6 +553,26 @@ window.__ModuleLoader__.load({
       imageStage_model: 'Downloading the image model…', imageStage_verifying: 'Verifying the installation…',
     });
     Object.assign(zh, {
+      visionTitle: '辅助识图', visionModel: '辅助识图模型',
+      visionIntro: '主模型不支持图片时，FPS 会把原图和本条问题发给此模型识别。',
+      visionAuto: '自动选择', visionLoading: '正在加载可识图模型…',
+      visionCatalogError: '部分识图模型未能加载。',
+      visionNoModels: 'DSH 模型目录中没有可用的识图模型。',
+      visionUnavailable: '不可用', visionSaveFailed: '无法保存识图模型选择。',
+      visionRouteFailed: '所选模型未能识图。请在 Four-pointed star → 辅助识图中重新选择，再发送草稿。',
+      visionFallback: '主模型不支持图片时使用',
+      reviewActions: '产物详情', reviewRefresh: '刷新产物',
+      reviewConfirm: '确认当前版本', reviewConfirmAgain: '确认新版本',
+      reviewForget: '移除确认', review_confirmed: '已确认',
+      review_changed: '内容已变更', review_checking: '正在核对版本…',
+      review_missing: '文件已找不到', review_unavailable: '暂时无法核对',
+      review_tooLarge: '超过 8 MB 复核上限',
+      review_stale: '核对时文件发生变化，请打开最新版本后再确认。',
+      reviewStorageFailed: '无法在本设备保存产物确认记录。',
+      reviewLastConfirmed: '上次确认', outputWrite: '写入成功',
+      outputDelivery: '已交付', outputReference: '回复中引用',
+      outputTurn: '回合', outputStep: '步骤', outputInspect: '查看写入记录',
+      outputRecordedModel: '记录中的模型路由', outputModelUnknown: '无模型路由记录',
       imageSettings: '图片生成',
       imageSettingsIntro: '可为此 DSH 安装启用文生图工具。云端服务会收到生图提示词，请按需开启。',
       imageSettingsLoad: '正在读取生图设置…', imageSettingsError: '无法更新生图设置。',
@@ -598,11 +640,15 @@ window.__ModuleLoader__.load({
       .cw-image-switch[aria-checked='true']::before { margin-left: auto; background: white; }
       .cw-image-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 9px; }
       .cw-image-actions p { flex-basis: 100%; }
-      .cw-image-actions button, .cw-image-actions input { min-height: 30px; padding: 4px 9px;
+      .cw-image-actions button, .cw-image-actions input, .cw-image-actions select { min-height: 30px; padding: 4px 9px;
         border: 1px solid var(--dsw-alias-border-l2); border-radius: 7px; color: inherit;
         background: var(--dsw-alias-bg-layer-2); font: inherit; font-size: 13px; }
       .cw-image-actions button:not(:disabled) { cursor: pointer; }
       .cw-image-actions input { width: min(100%, 235px); }
+      .cw-vision-settings { display: grid; gap: 8px; margin-bottom: 19px; padding: 0 0 16px;
+        border-bottom: 1px solid var(--dsw-alias-border-l1); }
+      .cw-vision-settings select { min-width: 0; max-width: 100%; }
+      .cw-composer-vision { padding: 1px 12px 7px; color: var(--cw-text-secondary); font-size: 11px; overflow-wrap: anywhere; }
       .cw-image-actions button:disabled, .cw-image-switch:disabled { opacity: .55; }
       .cw-image-settings .cw-image-error { margin: 6px 0 0; color: var(--dsw-alias-state-error-primary); }
       html[data-workbench-theme] body {
@@ -1482,6 +1528,9 @@ window.__ModuleLoader__.load({
         margin: 0 0 11px; font-size: 13px; line-height: 18px; font-weight: 600;
       }
       .cw-output-list { list-style: none; margin: 0; padding: 0; }
+      .cw-output-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+      .cw-output-item { position: relative; }
+      .cw-output-item + .cw-output-item { margin-top: 2px; }
       .cw-output-row {
         width: 100%; min-height: 30px; padding: 4px 6px;
         border: 0; border-radius: 6px; background: transparent;
@@ -1496,6 +1545,22 @@ window.__ModuleLoader__.load({
       }
       .cw-output-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
       .cw-output-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .cw-output-label { display: grid; min-width: 0; gap: 2px; }
+      .cw-output-state { color: var(--cw-text-muted); font-size: 10px; }
+      .cw-output-state[data-state="confirmed"] { color: var(--dsw-alias-state-success-primary); }
+      .cw-output-state[data-state="changed"], .cw-output-state[data-state="stale"] { color: var(--dsw-alias-state-warn-primary); }
+      .cw-output-main { display: flex; align-items: center; }
+      .cw-output-main > .cw-output-row { flex: 1; min-width: 0; }
+      .cw-context .cw-output-trigger, .cw-context .cw-output-action { padding: 4px 6px; border: 0; border-radius: 5px;
+        background: transparent; color: var(--cw-text-secondary); cursor: pointer; font-size: 12px; min-height: 28px; }
+      .cw-context .cw-output-trigger { flex: none; min-width: 28px; font-size: 16px; }
+      .cw-output-action:not(:disabled):hover, .cw-output-trigger:hover { background: var(--cw-surface-hover); color: var(--cw-text); }
+      .cw-output-action:disabled { opacity: .6; cursor: default; }
+      .cw-output-details { margin: 2px 0 7px 9px; padding: 6px 8px; border-inline-start: 1px solid var(--cw-border-strong);
+        display: grid; gap: 4px; overflow-wrap: anywhere; }
+      .cw-output-details p { margin: 0; }
+      .cw-output-controls { display: flex; gap: 3px; flex-wrap: wrap; }
+      .cw-context .cw-output-action.cw-output-confirm { color: var(--cw-accent); }
       .cw-output-type { margin-inline-start: auto; flex: none; color: var(--cw-text-muted); font-size: 10px; }
       .cw-context-environment {
         display: flex; align-items: center; gap: 10px; min-width: 0; padding: 5px 0;
@@ -1709,6 +1774,97 @@ window.__ModuleLoader__.load({
       ['pollinations', 'Pollinations', 'imagePoll'], ['comfy', 'ComfyUI + Comfy MCP', 'imageComfy'],
     ];
 
+    const VISION_PREFERENCE = 'claude-workbench:vision-model';
+    const visionListeners = new Set();
+    const storedVisionModel = () => {
+      try { return localStorage.getItem(VISION_PREFERENCE) || ''; }
+      catch { return ''; }
+    };
+    function subscribeVisionModel(listener) {
+      function onStorage(event) {
+        if (event.key === null || event.key === VISION_PREFERENCE) listener();
+      }
+      visionListeners.add(listener);
+      window.addEventListener('storage', onStorage);
+      return () => {
+        visionListeners.delete(listener);
+        window.removeEventListener('storage', onStorage);
+      };
+    }
+    function visionModelChoice(value) {
+      try {
+        const route = JSON.parse(value);
+        return typeof route?.provider === 'string' && route.provider && typeof route?.model === 'string' && route.model
+          ? route : null;
+      } catch {
+        return null;
+      }
+    }
+    const visionModelKey = (route) => route ? JSON.stringify([route.provider, route.model]) : '';
+    const visionModelLabel = ({ name, model, providerName, provider }) =>
+      `${name || model} · ${providerName && providerName !== provider ? `${providerName} (${provider})` : provider}`;
+
+    function VisionSettings({ t }) {
+      const selection = visionModelChoice(React.useSyncExternalStore(subscribeVisionModel, storedVisionModel));
+      const [catalog, setCatalog] = React.useState(null);
+      const [retry, setRetry] = React.useState(0);
+      const [saveError, setSaveError] = React.useState(false);
+      React.useEffect(() => {
+        const controller = new AbortController();
+        void fetch(new URL('api/workbench/visionModels', document.baseURI), {
+          cache: 'no-store', signal: controller.signal,
+        }).then(async (response) => {
+          if (!response.ok) throw new Error('Vision catalog unavailable');
+          const result = await response.json();
+          if (!Array.isArray(result.models)) throw new Error('Invalid vision catalog');
+          if (!controller.signal.aborted) setCatalog(result);
+        }).catch(() => {
+          if (!controller.signal.aborted) setCatalog({ models: [], incomplete: true });
+        });
+        return () => controller.abort();
+      }, [retry]);
+      const models = catalog?.models ?? [];
+      const selectedKey = visionModelKey(selection);
+      const missing = selection && !models.some((model) => visionModelKey(model) === selectedKey);
+      function change(event) {
+        const choice = models.find((model) => visionModelKey(model) === event.target.value);
+        try {
+          if (choice) localStorage.setItem(VISION_PREFERENCE, JSON.stringify(choice));
+          else localStorage.removeItem(VISION_PREFERENCE);
+          setSaveError(false);
+          for (const listener of visionListeners) listener();
+        } catch {
+          setSaveError(true);
+        }
+      }
+      return h('section', { className: 'cw-vision-settings', 'aria-labelledby': 'cw-vision-heading' },
+        h('div', null,
+          h('h2', { id: 'cw-vision-heading' }, t('visionTitle')),
+          h('p', { id: 'cw-vision-description' }, t('visionIntro'))),
+        h('div', { className: 'cw-image-actions' },
+          h('select', {
+            'aria-label': t('visionModel'), 'aria-describedby': 'cw-vision-description',
+            value: selectedKey, onChange: change,
+          },
+            h('option', { value: '' }, t('visionAuto')),
+            missing ? h('option', { value: selectedKey, disabled: true },
+              `${visionModelLabel(selection)}${catalog ? ` · ${t('visionUnavailable')}` : ''}`) : null,
+            models.map((model) => h('option', { key: visionModelKey(model), value: visionModelKey(model) }, visionModelLabel(model)))),
+          catalog ? h('button', { type: 'button', onClick: () => { setCatalog(null); setRetry((count) => count + 1); } },
+            t('compatRefresh')) : null),
+        catalog === null ? h('p', { role: 'status' }, t('visionLoading')) : null,
+        catalog?.incomplete ? h('p', { className: 'cw-image-error', role: 'status' }, t('visionCatalogError')) : null,
+        catalog && !catalog.incomplete && !models.length ? h('p', null, t('visionNoModels')) : null,
+        saveError ? h('p', { className: 'cw-image-error', role: 'alert' }, t('visionSaveFailed')) : null,
+      );
+    }
+
+    function ComposerVisionHint({ t }) {
+      const selection = visionModelChoice(React.useSyncExternalStore(subscribeVisionModel, storedVisionModel));
+      return h('div', { className: 'cw-composer-vision' },
+        `${t('visionFallback')} · ${selection ? visionModelLabel(selection) : t('visionAuto')}`);
+    }
+
     function ImageGenerationSettings(props) {
       const t = (key) => translate(props, key);
       const [state, setState] = React.useState(null);
@@ -1806,6 +1962,7 @@ window.__ModuleLoader__.load({
 
       return h('section', { className: 'cw-image-settings', 'aria-labelledby': 'cw-image-heading' },
         h(CompatibilityPanel, { t }),
+        h(VisionSettings, { t }),
         h('h2', { id: 'cw-image-heading' }, t('imageSettings')),
         h('p', null, t('imageSettingsIntro')),
         loading ? h('p', { role: 'status' }, t('imageSettingsLoad'))
@@ -2136,11 +2293,11 @@ window.__ModuleLoader__.load({
           error: result?.error ? `${result.error.code}: ${result.error.message}` : 'command.execute failed',
         };
       }
-      if (result.value === undefined) return { ok: false, error: 'unmatched' };
+      if (result.value === undefined) return { ok: true, matched: false };
       if (result.value.result?.kind === 'error') {
         return { ok: false, error: result.value.result.text || 'command failed' };
       }
-      return { ok: true };
+      return { ok: true, matched: true };
     }
 
     function Icon({ name }) {
@@ -2440,16 +2597,17 @@ window.__ModuleLoader__.load({
         && result?.error?.details?.reason === 'MODEL_DOES_NOT_SUPPORT_IMAGES';
     }
 
-    async function requestImageDescription(images, question, signal, t) {
+    async function requestImageDescription(images, question, route, signal, t) {
       const response = await fetch(new URL('api/workbench/describeImages', document.baseURI), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, images: images.map(({ mediaType, data }) => ({ mediaType, data })) }),
+        body: JSON.stringify({ question, images: images.map(({ mediaType, data }) => ({ mediaType, data })),
+          ...(route ? { route: { provider: route.provider, model: route.model } } : {}) }),
         signal,
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.description) {
-        throw new Error([t('imageRecognitionFailed'), result?.error].filter(Boolean).join(' '));
+        throw new Error(route ? t('visionRouteFailed') : [t('imageRecognitionFailed'), result?.error].filter(Boolean).join(' '));
       }
       return result.description;
     }
@@ -2564,12 +2722,23 @@ window.__ModuleLoader__.load({
         async load() {
           const rows = await transaction('readonly', (store) => store.getAll());
           const valid = [];
+          const expired = (date) => typeof date === 'number' && Date.now() - date > 30 * 86400_000;
           for (const row of rows) {
-            if (Date.now() - row.updatedAt > 30 * 86400_000) {
-              await transaction('readwrite', (store) => store.delete(row.id));
+            if (typeof row?.id !== 'string') continue;
+            if (expired(row.updatedAt)) {
+              await transaction('readwrite', (store) => {
+                const request = store.get(row.id);
+                request.onsuccess = () => {
+                  if (expired(request.result?.updatedAt)) store.delete(row.id);
+                };
+              }).catch(() => {});
               continue;
             }
-            valid.push({ id: row.id, images: row.images.map(decode), files: row.files.map(decode) });
+            try {
+              valid.push({ id: row.id, images: row.images.map(decode), files: row.files.map(decode) });
+            } catch {
+              valid.push({ id: row.id, unreadable: true });
+            }
           }
           return valid;
         },
@@ -2591,16 +2760,29 @@ window.__ModuleLoader__.load({
       let chain = Promise.resolve();
       let revision = 0;
       let hydrationFailed = false;
+      let unreadable = new Set();
+      let retrying;
       const dirty = new Map();
       const touched = new Set();
       const notify = () => { for (const listener of listeners) listener(); };
+      const readBlocked = (id) => hydrationFailed || unreadable.has(id);
       async function hydrate() {
         if (!storage) return;
-        return storage.load().then((rows) => {
-        for (const row of rows) if (!touched.has(row.id)) drafts.set(row.id,
-          { images: row.images, files: row.files, submission: null });
-        hydrationFailed = false; status = dirty.size ? 'saving' : 'saved'; notify();
-        }).catch(() => { hydrationFailed = true; status = 'error'; notify(); });
+        try {
+          const rows = await storage.load();
+          unreadable = new Set(rows.filter((row) => row.unreadable).map((row) => row.id));
+          for (const { id, images, files } of rows) {
+            if (!unreadable.has(id) && !touched.has(id)) {
+              drafts.set(id, { images, files, submission: read(id).submission });
+            }
+          }
+          hydrationFailed = false;
+          status = dirty.size ? 'saving' : 'saved';
+        } catch {
+          hydrationFailed = true;
+          status = 'error';
+        }
+        notify();
       }
       const ready = hydrate();
       chain = ready;
@@ -2615,39 +2797,46 @@ window.__ModuleLoader__.load({
         }, () => { status = 'error'; notify(); });
       }
       function write(id, draft, durable = true) {
-        touched.add(id);
         if (draft.images.length || draft.files.length || draft.submission) drafts.set(id, draft);
         else drafts.delete(id);
-        if (durable) persist(id, draft);
+        if (durable) {
+          touched.add(id);
+          persist(id, draft);
+        }
         notify();
+      }
+      async function retryStorage() {
+        await chain;
+        if (hydrationFailed || unreadable.size) await hydrate();
+        for (const [id, { draft }] of [...dirty]) if (!readBlocked(id)) persist(id, draft);
+        notify();
+        await chain;
       }
       return {
         read, ready, flush: () => chain,
-        status: () => status,
+        status: (id) => readBlocked(id) ? 'read_error' : status,
         subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
         replace(id, kind, change) {
           const draft = read(id);
-          if (!id || draft.submission || !['images', 'files'].includes(kind)) return;
+          if (!id || draft.submission || readBlocked(id) || !['images', 'files'].includes(kind)) return;
           write(id, { ...draft, [kind]: change(draft[kind]) });
         },
         begin(id) {
           const draft = read(id);
           if (!id || draft.submission || status === 'loading') return null;
-          const submission = Symbol();
+          const submission = { hasAttachments: Boolean(draft.images.length || draft.files.length) };
           write(id, { ...draft, submission }, false);
           return submission;
         },
         finish(id, submission, accepted = false) {
           const draft = read(id);
-          if (draft.submission !== submission) return;
-          write(id, accepted ? empty : { ...draft, submission: null }, accepted);
+          if (!submission || draft.submission !== submission) return;
+          const clearAttachments = accepted && submission.hasAttachments;
+          write(id, clearAttachments ? empty : { ...draft, submission: null }, clearAttachments);
         },
-        async retry() {
-          await chain;
-          if (hydrationFailed) await hydrate();
-          for (const [id, { draft }] of [...dirty]) persist(id, draft);
-          notify();
-          await chain;
+        retry() {
+          retrying ??= retryStorage().finally(() => { retrying = undefined; });
+          return retrying;
         },
       };
     }
@@ -3287,6 +3476,39 @@ window.__ModuleLoader__.load({
       jpeg: 'image/jpeg', jpg: 'image/jpeg', png: 'image/png', svg: 'image/svg+xml', webp: 'image/webp',
     };
     const MAX_THUMBNAIL_BYTES = 8 * 1024 * 1024;
+    const MAX_REVIEW_BYTES = 8 * 1024 * 1024;
+
+    function reviewRecords(key) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        return Object.fromEntries(Object.entries(data ?? {}).filter(([path, mark]) =>
+          path && /^[a-f0-9]{64}$/u.test(mark?.digest) && Number.isFinite(mark?.time)));
+      } catch {
+        return {};
+      }
+    }
+
+    const cannotReadOutput = (result) => ({
+      'workspace-file/not-found': 'missing',
+      'workspace-file/too-large': 'tooLarge',
+    }[result?.error?.code] ?? 'unavailable');
+
+    async function outputFingerprint(service, sessionId, file, signal) {
+      if (!globalThis.crypto?.subtle || typeof service?.readBytes !== 'function') return { status: 'unavailable' };
+      if (file.bytes > MAX_REVIEW_BYTES) return { status: 'tooLarge' };
+      const result = await service.readBytes(sessionId, file.path, {}, signal);
+      if (!result.ok) return { status: cannotReadOutput(result) };
+      const bytes = new Uint8Array(result.value.data);
+      if (bytes.length > MAX_REVIEW_BYTES) return { status: 'tooLarge' };
+      if (result.value.version !== file.version || result.value.eof === false
+        || (Number.isFinite(file.bytes) && file.bytes !== bytes.length)) return { status: 'stale' };
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      signal.throwIfAborted();
+      const current = await service.stat(sessionId, file.path, signal);
+      if (!current.ok) return { status: cannotReadOutput(current) };
+      if (current.value.version !== file.version) return { status: 'stale' };
+      return { digest: Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('') };
+    }
 
     function OutputIcon({ sessionId, file, mediaType }) {
       const ref = React.useRef(null);
@@ -3318,57 +3540,172 @@ window.__ModuleLoader__.load({
       );
     }
 
-    function ContextOutputs({ sessionId, cwd, files, t }) {
+    function NativeOutputInspection({ callId, label, useInspectCall }) {
+      const inspect = useInspectCall?.((value) => value);
+      if (!inspect) return null;
+      return h('button', { type: 'button', className: 'cw-output-action', onClick: () => inspect(callId) }, label);
+    }
+
+    function ContextOutputs({ sessionId, cwd, outputs, visible, renderSlot, t }) {
+      const files = outputs?.files ?? outputs;
+      const revision = outputs?.revision;
+      const reviewKey = `claude-workbench:output-reviews:${sessionId}`;
+      const [marks, setMarks] = React.useState(() => reviewRecords(reviewKey));
       const [verified, setVerified] = React.useState(null);
-      const [error, setError] = React.useState(false);
+      const [checking, setChecking] = React.useState(false);
+      const [refresh, refreshOutputs] = React.useReducer((count) => count + 1, 0);
+      const [expanded, setExpanded] = React.useState(null);
+      const [error, setError] = React.useState('');
+      const [pending, setPending] = React.useState(null);
+      const operation = React.useRef(null);
       React.useEffect(() => {
-        if (!Array.isArray(files) || !runtime.workspaceFiles?.stat) return;
+        function onStorage(event) {
+          if (event.key === reviewKey || event.key === null) setMarks(reviewRecords(reviewKey));
+        }
+        window.addEventListener('storage', onStorage);
+        return () => {
+          operation.current?.abort();
+          window.removeEventListener('storage', onStorage);
+        };
+      }, [reviewKey]);
+      React.useEffect(() => {
+        const service = runtime.workspaceFiles;
+        if (!visible || !Array.isArray(files) || !service?.stat) return;
         const controller = new AbortController();
         const signal = controller.signal;
+        setChecking(true);
         async function verifyOutputs() {
           const available = [];
-          const newest = files.slice().reverse();
-          for (let offset = 0; offset < newest.length && !signal.aborted; offset += 8) {
-            const batch = await Promise.allSettled(newest.slice(offset, offset + 8).map(async (path) => {
-              const result = await runtime.workspaceFiles.stat(sessionId, path, signal);
-              return result.ok ? { path, ...result.value } : null;
+          const newest = [...new Set([...files.slice().reverse(), ...Object.keys(marks)])];
+          for (let offset = 0; offset < newest.length && !signal.aborted; offset += 4) {
+            const batch = await Promise.all(newest.slice(offset, offset + 4).map(async (path) => {
+              const mark = Object.hasOwn(marks, path) ? marks[path] : undefined;
+              let file;
+              try {
+                const result = await service.stat(sessionId, path, signal);
+                if (!result.ok) return mark ? { path, status: cannotReadOutput(result) } : null;
+                file = { path, ...result.value, exists: true };
+                if (!mark) return file;
+                const fingerprint = await outputFingerprint(service, sessionId, file, signal);
+                return { ...file, status: fingerprint.status ?? (fingerprint.digest === mark.digest ? 'confirmed' : 'changed') };
+              } catch {
+                return mark ? { ...file, path, status: 'unavailable' } : file;
+              }
             }));
-            for (const item of batch) if (item.status === 'fulfilled' && item.value) available.push(item.value);
-            if (!signal.aborted && available.length) setVerified([...available]);
+            available.push(...batch.filter(Boolean));
           }
-          if (!signal.aborted) setVerified(available);
+          if (!signal.aborted) {
+            setVerified(available);
+            setChecking(false);
+          }
         }
         void verifyOutputs();
         return () => controller.abort();
-      }, [sessionId, files]);
-      if (!Array.isArray(files) || !runtime.workspaceFiles?.stat) return null;
+      }, [sessionId, files, revision, marks, refresh, visible]);
+      if (!Array.isArray(files) || !runtime.workspaceFiles?.stat || !visible) return null;
+
+      function saveMark(path, mark) {
+        try {
+          const latest = reviewRecords(reviewKey);
+          if (mark) latest[path] = mark;
+          else delete latest[path];
+          if (Object.keys(latest).length) localStorage.setItem(reviewKey, JSON.stringify(latest));
+          else localStorage.removeItem(reviewKey);
+          setMarks(latest);
+          setError('');
+        } catch {
+          setError(t('reviewStorageFailed'));
+        }
+      }
+
+      async function confirmOutput(file) {
+        if (operation.current) return;
+        const controller = new AbortController();
+        operation.current = controller;
+        setPending(file.path);
+        setError('');
+        try {
+          const result = await outputFingerprint(runtime.workspaceFiles, sessionId, file, controller.signal);
+          if (controller.signal.aborted) return;
+          if (result.status) {
+            setError(t(`review_${result.status}`));
+            refreshOutputs();
+          } else saveMark(file.path, { digest: result.digest, time: Date.now() });
+        } catch {
+          if (!controller.signal.aborted) setError(t('review_unavailable'));
+        } finally {
+          operation.current = null;
+          if (!controller.signal.aborted) setPending(null);
+        }
+      }
+
+      function preview(file) {
+        try {
+          runtime.sidebarRight.openResource(outputFileAddress(sessionId, cwd, file.path), { destination: 'sidebar' });
+          setError('');
+        } catch (failure) {
+          reportDiagnostic(`output preview failed: ${failure?.message || failure}`);
+          setError(t('contextOutputOpenFailed'));
+        }
+      }
 
       return h('section', { className: 'cw-context-section' },
-        h('h2', { className: 'cw-context-heading' }, t('contextOutputs')),
+        h('div', { className: 'cw-output-heading' },
+          h('h2', { className: 'cw-context-heading' }, t('contextOutputs')),
+          files.length || verified?.length ? h('button', {
+            type: 'button', className: 'cw-output-action', onClick: refreshOutputs,
+            disabled: checking, title: t('reviewRefresh'),
+          }, t('reviewRefresh')) : null),
         verified?.length ? h('ul', { className: 'cw-output-list' }, verified.map((file) => {
           const name = file.path.split(/[\\/]/u).pop();
           const extension = /\.([a-z0-9]{1,8})$/iu.exec(name)?.[1].toLowerCase();
           const mediaType = extension && Object.hasOwn(OUTPUT_IMAGE_TYPES, extension) ? OUTPUT_IMAGE_TYPES[extension] : '';
-          return h('li', { key: file.path },
-            h('button', {
-              type: 'button', className: 'cw-output-row', title: file.path,
-              onClick: () => {
-                try {
-                  runtime.sidebarRight.openResource(outputFileAddress(sessionId, cwd, file.path), { destination: 'sidebar' });
-                  setError(false);
-                } catch (failure) {
-                  reportDiagnostic(`output preview failed: ${failure?.message || failure}`);
-                  setError(true);
-                }
+          const source = outputs?.sources?.[file.path];
+          const mark = Object.hasOwn(marks, file.path) ? marks[file.path] : undefined;
+          const status = pending === file.path || (checking && mark)
+            ? 'checking' : file.status ?? (file.bytes > MAX_REVIEW_BYTES ? 'tooLarge' : undefined);
+          const details = expanded === file.path;
+          const sourceLabel = { write: 'outputWrite', delivery: 'outputDelivery', reference: 'outputReference' }[source?.kind];
+          return h('li', { key: file.path, className: 'cw-output-item' },
+            h('div', { className: 'cw-output-main' },
+              h(file.exists ? 'button' : 'div', {
+                className: 'cw-output-row', title: file.path,
+                ...(file.exists ? { type: 'button', onClick: () => preview(file) } : {}),
               },
-            },
-            h(OutputIcon, { key: file.version, sessionId, file, mediaType }),
-            h('span', { className: 'cw-output-name' }, name),
-            extension ? h('span', { className: 'cw-output-type', 'aria-hidden': true }, extension.toUpperCase()) : null),
+                h(OutputIcon, { key: file.version, sessionId, file, mediaType }),
+                h('span', { className: 'cw-output-label' },
+                  h('span', { className: 'cw-output-name' }, name),
+                  status ? h('span', { className: 'cw-output-state', 'data-state': status, role: 'status' },
+                    t(`review_${status}`)) : null),
+                extension ? h('span', { className: 'cw-output-type', 'aria-hidden': true }, extension.toUpperCase()) : null),
+              h('button', {
+                type: 'button', className: 'cw-output-trigger', title: t('reviewActions'),
+                'aria-label': `${t('reviewActions')} · ${name}`, 'aria-expanded': details,
+                onClick: () => setExpanded(details ? null : file.path),
+              }, '⋯')),
+            details ? h('div', { className: 'cw-output-details' },
+              sourceLabel ? h('p', { className: 'cw-context-subtle' }, [
+                t(sourceLabel), source.turn ? `${t('outputTurn')} ${source.turn}` : '',
+                source.step ? `${t('outputStep')} ${source.step}` : '', source.name,
+              ].filter(Boolean).join(' · ')) : null,
+              source?.kind === 'write' ? h('p', { className: 'cw-context-subtle' }, source.model
+                ? `${t('outputRecordedModel')} · ${source.provider} / ${source.model}` : t('outputModelUnknown')) : null,
+              mark ? h('p', { className: 'cw-context-subtle' },
+                `${t('reviewLastConfirmed')} · ${new Date(mark.time).toLocaleString()}`) : null,
+              h('div', { className: 'cw-output-controls' },
+                file.exists && !['confirmed', 'tooLarge'].includes(status) ? h('button', {
+                  type: 'button', className: 'cw-output-action cw-output-confirm', disabled: checking || pending !== null,
+                  onClick: () => void confirmOutput(file),
+                }, t(mark ? 'reviewConfirmAgain' : 'reviewConfirm')) : null,
+                source?.callId ? renderSlot('workbench.context.inspect', { callId: source.callId, label: t('outputInspect') }) : null,
+                mark ? h('button', {
+                  type: 'button', className: 'cw-output-action', disabled: pending !== null,
+                  onClick: () => saveMark(file.path, null),
+                }, t('reviewForget')) : null)) : null,
           );
         })) : h('div', { className: 'cw-context-subtle' },
           t(verified === null && files.length ? 'contextOutputsLoading' : 'contextOutputsEmpty')),
-        error ? h('p', { className: 'cw-context-subtle', role: 'alert' }, t('contextOutputOpenFailed')) : null,
+        error ? h('p', { className: 'cw-context-subtle', role: 'alert' }, error) : null,
       );
     }
 
@@ -3602,7 +3939,8 @@ window.__ModuleLoader__.load({
           categories.length ? h('p', { className: 'cw-context-subtle cw-context-note' }, t('contextEstimate')) : null,
         ),
         h(WorkbenchBoundary, null, h(LongTasks, { ...props, key: props.sessionId })),
-        h(ContextOutputs, { key: props.sessionId, sessionId: props.sessionId, cwd, files: outputFiles, t }),
+        h(ContextOutputs, { key: props.sessionId, sessionId: props.sessionId, cwd, outputs: outputFiles,
+          visible: props.useTabInfo?.().tab.visible ?? true, renderSlot: props.renderSlot, t }),
         h('section', { className: 'cw-context-section' },
           h('details', { className: 'cw-context-details' },
             h('summary', null, h(Icon, { name: 'chevron' }), t('contextSession')),
@@ -4037,7 +4375,7 @@ window.__ModuleLoader__.load({
       const readAttachments = React.useCallback(() => attachmentDrafts.read(sessionId), [sessionId]);
       const { images, files, submission: draftSubmission } =
         React.useSyncExternalStore(attachmentDrafts.subscribe, readAttachments);
-      const draftStorageStatus = React.useSyncExternalStore(attachmentDrafts.subscribe, attachmentDrafts.status);
+      const draftStorageStatus = React.useSyncExternalStore(attachmentDrafts.subscribe, () => attachmentDrafts.status(sessionId));
       const [commandSending, setSending] = React.useState(false);
       const sending = commandSending || Boolean(draftSubmission);
       const [recognizing, setRecognizing] = React.useState(false);
@@ -4115,7 +4453,7 @@ window.__ModuleLoader__.load({
       const running = Boolean(session?.running);
       const unavailable = Boolean(props.disabled || props.blocked || session?.removed || !sessionId || !promptAllowed);
       const draftLoading = draftStorageStatus === 'loading';
-      const canAcceptFiles = !unavailable && !draftLoading && !sending && uploadAllowed
+      const canAcceptFiles = !unavailable && !draftLoading && draftStorageStatus !== 'read_error' && !sending && uploadAllowed
         && (!session?.subagent || session.subagent.address?.mode === 'continuable');
       const voiceLocked = unavailable || sending;
       const previousVoiceDraft = voiceDraft.current;
@@ -4402,14 +4740,14 @@ window.__ModuleLoader__.load({
           const commands = runtime.commandsRemote;
           if (typeof commands?.execute !== 'function') throw new Error(t('commandsUnavailable'));
           const outcome = await executeHostCommand(commands, sessionId, line);
-          if (!outcome.ok) {
-            throw new Error(outcome.error === 'unmatched' ? t('commandNotFound') : outcome.error);
-          }
+          if (!outcome.ok) throw new Error(outcome.error);
+          if (!outcome.matched) return false;
         }
         if (!preserveDraft) {
           if (readDraft(sessionId) === text) writeDraft(sessionId, '');
           if (sessionRef.current === sessionId && voiceDraft.current.text === text) setText('');
         }
+        return true;
       }
 
       async function chooseCommand(row) {
@@ -4428,7 +4766,7 @@ window.__ModuleLoader__.load({
         setSending(true);
         setError('');
         try {
-          await runCommandLine(`/${row.name}`, preserveDraft);
+          if (!await runCommandLine(`/${row.name}`, preserveDraft)) throw new Error(t('commandNotFound'));
         } catch (cause) {
           setError(errorMessage(cause));
         } finally {
@@ -4466,16 +4804,18 @@ window.__ModuleLoader__.load({
         if (commandLine) {
           setSending(true);
           try {
-            await runCommandLine(commandLine);
+            if (await runCommandLine(commandLine)) return;
           } catch (cause) {
-            setError(errorMessage(cause));
+            if (sessionRef.current === sessionId) setError(errorMessage(cause));
+            return;
           } finally {
             if (sessionRef.current === sessionId) setSending(false);
           }
-          return;
+          if (sessionRef.current !== sessionId || voiceDraft.current.text !== draft) return;
         }
         const draftToken = attachmentDrafts.begin(sessionId);
         if (!draftToken) return;
+        const visionModel = draftImages.length ? visionModelChoice(storedVisionModel()) : null;
         let submission;
         let accepted = false;
         let reference;
@@ -4519,7 +4859,7 @@ window.__ModuleLoader__.load({
             visionRequest.current = request;
             setRecognizing(true);
             try {
-              const description = await requestImageDescription(outgoingImages, draft, request.signal, t);
+              const description = await requestImageDescription(outgoingImages, draft, visionModel, request.signal, t);
               const retainedFiles = [...outgoingFiles];
               if (result.error.code === 'session/attachment-invalid') {
                 const uploads = runtime.fileUploads;
@@ -4741,6 +5081,7 @@ window.__ModuleLoader__.load({
               }, h(Icon, { name: 'close' })),
             )),
           ) : null,
+          images.length > 0 ? h(ComposerVisionHint, { t }) : null,
           h('div', { className: 'cw-composer-row' },
             h(ComposerAddMenu, {
               disabled: unavailable || draftLoading || sending,
@@ -4816,12 +5157,12 @@ window.__ModuleLoader__.load({
             ),
           ),
           props.accessory || null,
-          (images.length || files.length || ['loading', 'error'].includes(draftStorageStatus))
+          (images.length || files.length || ['loading', 'error', 'read_error'].includes(draftStorageStatus))
             ? h('div', { className: 'cw-draft-status', role: 'status' },
               t(`draft_${draftStorageStatus}`),
-              draftStorageStatus === 'error' ? h('button', {
+              ['error', 'read_error'].includes(draftStorageStatus) ? h('button', {
                 type: 'button', onClick: () => attachmentDrafts.retry(),
-              }, t('imageRetry')) : null) : null,
+              }, t('retry')) : null) : null,
           error ? h('div', { className: 'cw-composer-error', role: 'alert' }, error) : null,
           props.blocked?.reason ? h('div', { className: 'cw-composer-error' }, props.blocked.reason) : null,
         ),
@@ -4920,7 +5261,7 @@ window.__ModuleLoader__.load({
         'slots', 'locale', 'shortcuts', 'configForms', 'uiWorkspace', 'workspaces', 'sessions', 'remote',
       ],
       ...(typeof window !== 'undefined' && window.__CLAUDE_WORKBENCH_TEST__
-        ? { testHooks: { commandQuery, filterCommandRows, commandRowsFromDescriptors, commandInsertion, executeHostCommand, summarizeToolCall, summarizeWorkGroup, isDangerousPermission, rootModelGroup, formatTokenCount, contextPercent, mentionQuery, referenceRows, submitMode, formatBytes, voiceDraftInsertion, createSessionHistory, createAttachmentDrafts, createAttachmentStorage, compatibilityChecks, orderJobs, jobElapsed, registerComposer, bridgeNativeJobs } }
+        ? { testHooks: { commandQuery, filterCommandRows, commandRowsFromDescriptors, commandInsertion, executeHostCommand, summarizeToolCall, summarizeWorkGroup, isDangerousPermission, rootModelGroup, formatTokenCount, contextPercent, mentionQuery, referenceRows, submitMode, formatBytes, voiceDraftInsertion, createSessionHistory, createAttachmentDrafts, createAttachmentStorage, compatibilityChecks, orderJobs, jobElapsed, registerComposer, bridgeNativeJobs, outputFingerprint } }
         : {}),
       apply(ctx) {
         runtime.ctx = ctx;
@@ -5098,9 +5439,23 @@ window.__ModuleLoader__.load({
                   'sidebar.right.pane.tab',
                   guardInjection('context body', () => ctx.slots.register({
                     name: 'sidebar.right.pane.tab', key: CONTEXT_TAB,
-                    children: { 'workbench.context.jobs': { kind: 'single', scope: 'session' } },
+                    children: {
+                      'workbench.context.jobs': { kind: 'single', scope: 'session' },
+                      'workbench.context.inspect': { kind: 'single', scope: 'session' },
+                    },
                   }, ContextPanel)),
                 );
+                const disposeInspect = install('native tool inspection', () => ctx.slots.inject(
+                  'workbench.context.inspect',
+                  guardInjection('native tool inspection', () => {
+                    const native = ctx.slots.entriesOfSlot('conversation.session')[0];
+                    const store = native?.store ?? native?.options?.store;
+                    if (!native?.inject || !store) return () => {};
+                    return ctx.slots.register({
+                      name: 'workbench.context.inspect', inject: native.inject, store,
+                    }, NativeOutputInspection);
+                  }),
+                ));
                 const disposeJobs = install('native job details', () => bridgeNativeJobs(ctx.slots));
                 const disposeHeader = ctx.slots.inject(
                   'conversation.session.header.utilities',
@@ -5109,6 +5464,7 @@ window.__ModuleLoader__.load({
                   }, HeaderContextButton)),
                 );
                 return () => {
+                  disposeInspect();
                   disposeJobs();
                   disposeHeader();
                   disposeBody();

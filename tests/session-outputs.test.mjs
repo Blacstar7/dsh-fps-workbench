@@ -25,7 +25,7 @@ test('completed assistant links add files to the same list as native deliverable
     '`[Example](/should-not-list.md)`',
     '```markdown\n[Example](/also-ignored.md)\n```',
   ].join('\n')));
-  assert.deepEqual(outputs.wire.view(state), [
+  assert.deepEqual(outputs.wire.view(state).files, [
     '/work/report.md', '/other/deliverables/生成 图片.png', '/work/my clip.mp4', '/other/draft(v2).md',
   ]);
 });
@@ -43,10 +43,53 @@ test('FPS image calls appear in outputs before the assistant links the image', (
   const message = { source: { callId: 'image-1' }, content, isError: false };
   const direct = outputs.apply(call, { type: 'tool/result', data: { message } });
   const nested = outputs.apply(initial, {
-    type: 'tool/ptc-dispatch', data: { name: 'fps_generate_image', content, isError: false },
+    type: 'tool/ptc-dispatch', data: { name: 'fps_generate_image', subCallId: 'image-1', content, isError: false },
   });
   const failed = outputs.apply(call, { type: 'tool/result', data: { message: { ...message, isError: true } } });
-  assert.deepEqual(outputs.wire.view(direct), ['/dsh/generated/fps-image.png']);
+  assert.deepEqual(outputs.wire.view(direct).files, ['/dsh/generated/fps-image.png']);
   assert.deepEqual(outputs.wire.view(nested), outputs.wire.view(direct));
-  assert.deepEqual(outputs.wire.view(failed), []);
+  assert.deepEqual(outputs.wire.view(failed).files, []);
+});
+
+test('repeat deliveries and writes refresh existing paths while references preserve order', () => {
+  const present = (files) => ({ type: 'deliverables/presented', data: { files: files.map((path) => ({ path })) } });
+  const initial = outputs.apply(outputs.init({ cwd: '/work' }), present(['cover.png', 'review.md']));
+  const reference = outputs.apply(initial, reply('[Cover](cover.png)'));
+  assert.deepEqual(outputs.wire.view(reference).files, ['/work/cover.png', '/work/review.md']);
+  assert.equal(outputs.wire.view(reference).revision, 2);
+  const updated = outputs.apply(reference, present(['cover.png', '/work/cover.png']));
+  assert.deepEqual(outputs.wire.view(updated).files, ['/work/review.md', '/work/cover.png']);
+  assert.equal(outputs.wire.view(updated).revision, 3);
+  const write = outputs.apply(updated, {
+    type: 'tool/ptc-dispatch', data: { name: 'write', meta: { path: '/work/cover.png' }, isError: false },
+  });
+  assert.deepEqual(outputs.wire.view(write).files, ['/work/review.md', '/work/cover.png']);
+  assert.equal(outputs.wire.view(write).revision, 4);
+});
+
+test('output origin retains a successful write and its recorded route across later references', () => {
+  const initial = outputs.init({ cwd: '/work' });
+  const model = outputs.apply(initial, {
+    type: 'assistant/message', data: { turn: 2, step: 1, message: {
+      content: [{ type: 'tool-call' }], source: { kind: 'model', provider: 'second-route', model: 'same-id' },
+    } },
+  });
+  const called = outputs.apply(model, { type: 'tool/call', data: {
+    turn: 2, step: 1, callId: 'edit-cover', name: 'write', arguments: { file_path: 'cover.svg' },
+  } });
+  const message = { source: { callId: 'edit-cover' }, content: [], isError: false };
+  const successful = outputs.apply(called, { type: 'tool/result', data: { message } });
+  const referenced = outputs.apply(successful, reply('[Cover](cover.svg) [Only linked](brief.md)'));
+  assert.deepEqual(outputs.wire.view(referenced).sources, {
+    '/work/cover.svg': { kind: 'write', name: 'write', turn: 2, step: 1, callId: 'edit-cover',
+      provider: 'second-route', model: 'same-id' },
+    '/work/brief.md': { kind: 'reference' },
+  });
+  const next = outputs.apply(referenced, { type: 'tool/call', data: {
+    turn: 3, step: 1, callId: 'failed-edit', name: 'write', arguments: { file_path: 'cover.svg' },
+  } });
+  const failed = outputs.apply(next, {
+    type: 'tool/result', data: { message: { ...message, source: { callId: 'failed-edit' }, isError: true } },
+  });
+  assert.deepEqual(outputs.wire.view(failed), outputs.wire.view(referenced));
 });
