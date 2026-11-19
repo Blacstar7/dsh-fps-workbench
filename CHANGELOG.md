@@ -1,24 +1,40 @@
 # Changelog · 更新日志
 
+<!--
+新版本先写简体中文，再写 English。每种语言分为「现在能用什么新功能」和「修好了哪些问题」。
+新功能写明从哪里打开、点什么、操作后会看到什么。需要设置或有使用限制时，放在对应功能下面。
+修复写明用户以前会遇到什么问题和升级后会怎样。两种语言保持相同的顺序和信息。
+-->
+
 ## [0.1.82](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.82) — 2026-11-18
-
-### English
-
-- Confirm a version of an output up to 8 MiB and see when its contents change, including same-size replacements.
-- See the turn, step, and model route recorded for an output write. Open the matching tool call when DSH's native Trajectory view is enabled.
-- Select an image-recognition fallback by model and provider. If that route fails, the draft stays available for another attempt.
-- Protect saved attachments after a restore failure and let users retry without losing the draft.
-- Send unmatched leading-slash text, including absolute paths, as a regular message.
-- Refresh the output list and image thumbnails after a file is rewritten at the same path.
 
 ### 简体中文
 
-- 产物栏可确认 8 MiB 以内的文件版本。文件即使同名同大小，内容变化也会提醒复核。
-- 产物详情显示记录中的写入回合、步骤和模型路由。启用原生执行轨迹时可跳到对应工具调用。
-- 可指定辅助识图服务商和模型。指定路由失败后保留草稿。
-- 附件恢复失败时保留草稿，支持重试恢复。
-- 未匹配命令的斜杠开头文字可作为普通消息发送，包括以绝对路径开头的内容。
-- 同路径产物覆盖后刷新产物列表和图片缩略图。
+#### 现在能用什么新功能
+
+1. **看过的文件被改了，FPS 会提醒您再看一遍。** 在会话顶栏打开「上下文」，找到右侧的「输出内容」。看完报告或图片后，点文件旁的「⋯ → 确认当前版本」。比如确认后有人在会话里覆盖了 `封面.png`，即使文件名和大小都一样，那一行也会提示「内容已变更」。打开新版看完后，点「确认新版本」。支持 8 MiB 以内的文件。
+2. **查一份文件是哪一轮、哪一步改的。** 在「上下文 → 输出内容」点文件旁的「⋯」。有写入记录时，详情会显示回合、步骤，以及记录到的模型和服务商。如果 DSH 已启用「轨迹」，点「查看写入记录」就能跳到那次操作。
+3. **自己选哪个模型来读截图。** 打开「插件 → Four-pointed star → 辅助识图」，从已配置的视觉模型中选一个。给只支持文字的主模型附上截图时，输入框会先显示选好的辅助模型。发送后，它先读截图，再由主模型根据描述回答。如果辅助模型失败，图片和文字会留在草稿里，您可以换一个再发。
+
+#### 修好了哪些问题
+
+- **附件一时读不出来，草稿仍能找回。** 如果输入框提示恢复失败，先发一条纯文字也会保留已保存的附件。点「重试」可以再次恢复附件。
+- **以文件路径开头的消息可以直接发。** 例如输入 `/tmp/report.md 帮我看看这份报告`，现在会作为普通消息发送。
+- **同名文件改写后，产物栏会刷新。** 在会话里更新同名封面后，文件会移到产物栏前面，缩略图也会显示新版。
+
+### English
+
+#### What you can do now
+
+1. **See when a file you reviewed has changed.** Open **Context → Outputs** from the conversation header. After previewing a file, choose **⋯ → Confirm current version** beside it. If its content is replaced, the row shows **Content changed**, even when the file keeps its name and size. Preview the new file and select **Confirm new version**. This works for files up to 8 MiB.
+2. **Find the step that changed a file.** In **Context → Outputs**, choose **⋯** beside the file. When a write was recorded, the details show its turn, step, and any recorded model and provider. With DSH's **Trajectory** view enabled, **View write record** opens the corresponding tool call.
+3. **Choose which model reads your screenshots.** Go to **Plugins → Four-pointed star → Image recognition** and choose a configured vision model. When the conversation model accepts only text, the composer shows the selected fallback beside the image draft. The fallback reads the screenshot and the conversation model answers using its description. If recognition fails, the image and text stay in the draft so you can choose another model and retry.
+
+#### What was fixed
+
+- **Saved attachments can recover after a temporary read failure.** Sending a text-only message preserves the saved attachments. Use **Retry** in the composer to restore them.
+- **Messages can start with a file path.** For example, `/tmp/report.md Please review this report` now sends as a regular message.
+- **The output list refreshes after a file is replaced.** When a conversation rewrites the same cover file, it moves toward the top of **Outputs** and the thumbnail shows the new image.
 
 ## [0.1.81](https://github.com/Blacstar7/dsh-fps-workbench/releases/tag/v0.1.81) — 2026-11-14
 
